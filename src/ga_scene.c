@@ -72,6 +72,9 @@ void	ga_geom_print(ga_geom_t*g){
 			printf("<Sphere radius='%f' name='%s' />\n",
 					g->radius, g->name);
 			break;
+		case GA_GEOM_MODEL:
+			printf("<Obj file='TODO' name='%s' />\n",g->name);
+			break;
 		default:
 			printf("<UnknownGeometry />\n");
 	}

@@ -133,7 +133,7 @@ model_t *model_load(char *path){
 	tex_count  = 0;
 
 	if(!(f = fopen(path,"r"))){
-		printf("ERROR : could not read file %s\n",path);
+		printf("ERROR: could not read file %s\n",path);
 		return NULL;
 	}
 	while(readline(line,f,LINE_LENGTH)){
@@ -177,8 +177,15 @@ model_t *model_load(char *path){
 	m = model_new();
 	memset(tri,0,tri_count*sizeof(tri_t));
 	fclose(f);
+	printf("SUCCESS: Model '%s' successfully loaded\n",path);
 	return m;
 }
+model_t *model_parse(	char *v, 
+			char* n, 
+			char* t, 
+			char* vi,
+			char* ni,
+			char* ti	);
 /*int main(int argc, char **argv){
 	model_t *m;
 	if(argc < 2){

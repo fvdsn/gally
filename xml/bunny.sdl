@@ -1,0 +1,25 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE Sdl SYSTEM "sdl.dtd">
+
+<Sdl>
+   <Cameras>
+      <Camera position="0 0 4" direction="0 0 -1" up="0 1 0" fovy="60" name="cam0" /> 
+   </Cameras>   
+   
+   <Lights>
+      <PointLight position="0 2 0" intensity="1" color="1 1 1" name="light0" />
+   </Lights>
+   
+   <Geometry>
+   	<Obj file="xml/obj/bunny.obj" name="bunny" />
+	<Yahoo />
+   </Geometry>
+   
+   <Materials>
+      <DiffuseMaterial color="0.75 0.75 1" name="dif0" emit="0.1 0.2 0"/>      
+   </Materials>
+   
+   <Scene camera="cam0" lights="light0" background="0.3 0.3 0.3">
+      <Shape geometry="bunny" material="dif0" />
+   </Scene>
+</Sdl>

@@ -83,6 +83,29 @@ static void ga_sphere_explore(xmlNodePtr n, ga_scene_t *s){
 	}
 	ga_scene_add_geom(s,ga_geom_new_sphere(name,radius));
 }
+static void ga_obj_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	model_t *m	= NULL;
+	char * path	= NULL;
+	char * name	= "unnamed_obj_file";
+	while(a){
+		if(!xmlStrcmp(a->name,(const xmlChar*)"file")){
+			path = (char*)a->children->content;
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			name = (char*)a->children->content;
+		}else{
+			fprintf(stderr,"WARNING: unimplemented obj property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	if(!path){
+		fprintf(stderr,"ERROR: <Obj name='%s' /> missing a 'file' attribute\n",name); 
+	}else if(!(m = model_load(path))){
+		fprintf(stderr,"ERROR: unable to load obj file '%s'\n",path);
+	}else{
+		ga_scene_add_geom(s,ga_geom_new_model(name,m));
+	}
+}
 /**
  * parse a 'DiffuseMaterial' xml tag, and adds a DiffuseMaterial to the scene, with
  * default values if missing attributes.
@@ -222,6 +245,8 @@ static void ga_xml_explore(xmlNodePtr n, ga_scene_t *s){
 				ga_diffusematerial_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Sphere")){
 				ga_sphere_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Obj")){
+				ga_obj_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Scene")){
 				ga_scene_explore(n,s);
 			}else{
@@ -262,7 +287,7 @@ ga_scene_t *ga_scene_load(char *path){
 
 	ga_xml_explore(cur,s);
 
-	printf("Document '%s' succesfully loaded\n",path);
+	printf("SUCCESS: Document '%s' succesfully loaded\n",path);
 	return s;	
 }
 
