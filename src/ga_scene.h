@@ -58,6 +58,7 @@ typedef struct ga_shape_s{
 	ga_material_t 	*material;
 }ga_shape_t;
 ga_shape_t *ga_shape_new(char*name, ga_geom_t*g, ga_material_t *m);
+void	ga_shape_print(ga_shape_t*s);
 
 enum ga_transform_type{
 	GA_IDENTITY,
@@ -69,6 +70,7 @@ typedef struct ga_transform_s{
 	char name[STRING_LENGTH];
 	int type;
 	vec_t param;
+	float angle;
 	mat_t *matrix;
 	ga_list_t *child;
 	ga_list_t *shape;
@@ -79,6 +81,7 @@ ga_transform_t *ga_transform_rotate(vec_t param,float angle);
 ga_transform_t *ga_transform_scale(vec_t param);
 void ga_transform_add_child(ga_transform_t *p, ga_transform_t *c);
 void ga_transform_add_shape(ga_transform_t *p, ga_shape_t *c);
+void ga_transform_print(ga_transform_t *t);
 
 typedef struct ga_scene_s{
 	char name[STRING_LENGTH];
@@ -92,6 +95,7 @@ typedef struct ga_scene_s{
 	ga_transform_t *transform;
 }ga_scene_t;
 ga_scene_t *ga_scene_new(char *name);
+void	ga_scene_print(ga_scene_t *s);
 void	ga_scene_add_camera(ga_scene_t *s, ga_cam_t *c);
 void	ga_scene_add_light(ga_scene_t *s, ga_light_t *l);
 void	ga_scene_add_material(ga_scene_t *s, ga_material_t *m);

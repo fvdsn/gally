@@ -83,6 +83,11 @@ ga_shape_t *ga_shape_new(char*name, ga_geom_t*g, ga_material_t *m){
 	s->material = m;
 	return s;
 }
+void ga_shape_print(ga_shape_t*s){
+	printf("<Shape geometry='%s' material='%s' />\n",
+			s->geom->name,
+			s->material->name);
+}
 ga_transform_t *ga_transform_identity(void){
 	ga_transform_t *t = (ga_transform_t*)malloc(sizeof(ga_transform_t));
 	strncpy(t->name,"identity",12);
@@ -113,6 +118,7 @@ ga_transform_t *ga_transform_rotate(vec_t param, float angle){
 	ga_transform_t *t = ga_transform_identity();
 	strncpy(t->name,"rotation",8);
 	t->type = GA_ROTATE;
+	t->angle = angle;
 	t->param = param;
 	t->matrix = mat_new_zero();
 	mat_set_rot(0,0,t->matrix);/*TODO*/
@@ -124,6 +130,42 @@ void ga_transform_add_child(ga_transform_t *p, ga_transform_t *c){
 void ga_transform_add_shape(ga_transform_t *p, ga_shape_t *c){
 	ga_list_add(p->shape,c);
 }
+void ga_transform_print(ga_transform_t *t){
+	ga_node_t *n;
+	switch(t->type){
+		case GA_TRANSLATE:
+			printf("<Translate vector='%f %f %f'>\n",
+					t->param.x,t->param.y,t->param.z);
+			break;
+		case GA_ROTATE:
+			printf("<Rotate axis='%f %f %f' angle='%f'>\n",
+					t->param.x,t->param.y,t->param.z,t->angle);
+			break;
+		case GA_SCALE:
+			printf("<Scale scale='%f %f %f'>\n",
+					t->param.x,t->param.y,t->param.z);
+			break;
+		default:break;
+	}
+	n = t->shape->first;
+	while(n){
+		ga_shape_print((ga_shape_t*)n->data);
+		n = n->next;
+	}
+	n = t->child->first;
+	while(n){
+		ga_transform_print((ga_transform_t*)n->data);
+		n = n->next;
+	}
+	switch(t->type){
+		case GA_TRANSLATE:printf("</Translate>\n");break;
+		case GA_ROTATE:	printf("</Rotate>\n");break;
+		case GA_SCALE:	printf("</Rotate>\n");break;
+		default:break;
+	}
+}
+
+
 ga_scene_t *ga_scene_new(char *name){
 	ga_scene_t *s = (ga_scene_t*)malloc(sizeof(ga_scene_t));
 	strncpy(s->name,name,STRING_LENGTH);
@@ -160,4 +202,44 @@ ga_material_t	*ga_scene_get_material(ga_scene_t *s, const char *name){
 ga_geom_t	*ga_scene_get_geom(ga_scene_t *s, const char *name){
 	return (ga_geom_t*)ga_list_find(s->geom,name);
 }
+void	ga_scene_print(ga_scene_t *s){
+	ga_node_t *n = NULL;
+	printf("<?xml version='1.0' encoding='utf-8'?>\n");
+	printf("<Sdl>\n");
+	printf("  <Cameras>\n");
+	n = s->camera->first;
+	while(n){
+		ga_cam_print((ga_cam_t*)n->data);
+		n = n->next;
+	}
+	printf("  </Cameras>\n\n");
+	printf("  <Lights>\n");
+	n = s->light->first;
+	while(n){
+		ga_light_print((ga_light_t*)n->data);
+		n = n->next;
+	}
+	printf("  </Lights>\n\n");
+	printf("  <Geometry>\n");
+	n = s->geom->first;
+	while(n){
+		ga_geom_print((ga_geom_t*)n->data);
+		n = n->next;
+	}
+	printf("  </Geometry>\n\n");
+	printf("  <Materials>\n");
+	n = s->material->first;
+	while(n){
+		ga_material_print((ga_material_t*)n->data);
+		n = n->next;
+	}
+	printf("  </Materials>\n\n");
+	printf("  <Scene camera='%s' lights='all' background='%f %f %f'>\n",
+			s->active_camera->name,
+			s->bg_color.x, s->bg_color.y, s->bg_color.z	);
+	ga_transform_print(s->transform);
+	printf("  </Scene>\n");
+	printf("</Sdl>\n\n");
+}
+
 

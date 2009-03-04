@@ -17,7 +17,6 @@ static void ga_cam_explore(xmlNodePtr n, ga_scene_t *s){
 	vec_t dir 	= vec_new(1,0,0,1);
 	vec_t up 	= vec_new(0,0,1,1);
 	float fov	= 90.0f;
-	ga_cam_t * cam 	= NULL;
 	char * name	= "unnamed_camera";
 	while(a){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"position")){
@@ -31,13 +30,11 @@ static void ga_cam_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
-			fprintf(stderr,"\nWARNING: unimplemented camera property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unimplemented camera property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
-	cam = ga_cam_new(name,position,dir,up,fov);
-	ga_scene_add_camera(s,cam);
-	ga_cam_print(cam);
+	ga_scene_add_camera(s,ga_cam_new(name,position,dir,up,fov));
 }
 /**
  * parse a 'PointLight' xml tag, and adds a PointLight to the scene, with
@@ -48,7 +45,6 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 	vec_t position 	= vec_new(0,0,0,1);
 	vec_t color 	= vec_new(1,1,1,1);
 	float intensity	= 1.0f;
-	ga_light_t*light= NULL;
 	char * name	= "unnamed_point_light";
 	while(a){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"position")){
@@ -60,14 +56,12 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
-			fprintf(stderr,"\nWARNING: unimplemented light property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unimplemented light property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
 	color.w = intensity;
-	light = ga_light_new(name,position,color);
-	ga_scene_add_light(s,light);
-	ga_light_print(light);
+	ga_scene_add_light(s,ga_light_new(name,position,color));
 }
 /**
  * parse a 'Sphere' xml tag, and adds a Sphere to the scene, with
@@ -76,7 +70,6 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 static void ga_sphere_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
 	float radius	= 0.5f;
-	ga_geom_t*geom= NULL;
 	char * name	= "unnamed_sphere";
 	while(a){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"radius")){
@@ -84,13 +77,11 @@ static void ga_sphere_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
-			fprintf(stderr,"\nWARNING: unimplemented sphere property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unimplemented sphere property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
-	geom = ga_geom_new_sphere(name,radius);
-	ga_scene_add_geom(s,geom);
-	ga_geom_print(geom);
+	ga_scene_add_geom(s,ga_geom_new_sphere(name,radius));
 }
 /**
  * parse a 'DiffuseMaterial' xml tag, and adds a DiffuseMaterial to the scene, with
@@ -99,7 +90,6 @@ static void ga_sphere_explore(xmlNodePtr n, ga_scene_t *s){
 static void ga_diffusematerial_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
 	vec_t color 	= vec_new(1,1,1,1);
-	ga_material_t*mat= NULL;
 	char * name	= "unnamed_diffuse_material";
 	while(a){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
@@ -107,13 +97,11 @@ static void ga_diffusematerial_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
-			fprintf(stderr,"\nWARNING: unimplemented diffuse material property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unimplemented diffuse material property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
-	mat = ga_material_new_diffuse(name,color);
-	ga_scene_add_material(s,mat);
-	ga_material_print(mat);
+	ga_scene_add_material(s,ga_material_new_diffuse(name,color));
 }
 /**
  * Parse a 'Shape' xml tag, checks that geometry and material attributes
@@ -130,16 +118,16 @@ static void ga_shape_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *t){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"material")){
 			material = (char*)a->children->content;
 		}else{
-			fprintf(stderr,"\nWARNING: unexpected shape property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unexpected shape property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
 	if(!ga_scene_get_geom(s,geometry)){
-		fprintf(stderr,"\nERROR: geometry '%s' undefined\n", geometry);
+		fprintf(stderr,"ERROR: geometry '%s' undefined\n", geometry);
 		return;
 	}
 	if(!ga_scene_get_material(s,material)){
-		fprintf(stderr,"\nERROR: material '%s' undefined\n", material);
+		fprintf(stderr,"ERROR: material '%s' undefined\n", material);
 		return;
 	}
 	ga_transform_add_shape(	t, ga_shape_new(
@@ -172,7 +160,7 @@ static void ga_scene_graph_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *
 			n = n->next;
 			continue;
 		}else{
-			fprintf(stderr,"\nWARNING: unimplemented transform '%s'\n",(const char*)n->name);
+			fprintf(stderr,"WARNING: unimplemented transform '%s'\n",(const char*)n->name);
 			n = n->next;
 			continue;
 		}
@@ -188,7 +176,7 @@ static void ga_scene_graph_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *
 			}else if(!xmlStrcmp(a->name,(const xmlChar*)"angle")){
 				angle = (float)strtod((char*)a->children->content,NULL);
 			}else{
-				fprintf(stderr,"\nWARNING: unexpected transform attribute '%s'\n",(const char*)a->name);
+				fprintf(stderr,"WARNING: unexpected transform attribute '%s'\n",(const char*)a->name);
 			}
 		}
 		switch(type){
@@ -275,14 +263,16 @@ ga_scene_t *ga_scene_load(char *path){
 	ga_xml_explore(cur,s);
 
 	printf("Document '%s' succesfully loaded\n",path);
-	return NULL;	
+	return s;	
 }
 
 int main(int argc, char **argv){
+	ga_scene_t *s = NULL;
 	if(argc < 2){
 		fprintf(stderr,"ERROR: a path to the sdl scene file must be given as argument\n");
 		return 1;
 	}
-	ga_scene_load(argv[1]);
+	s = ga_scene_load(argv[1]);
+	ga_scene_print(s);
 	return 0;
 }
