@@ -2,6 +2,7 @@
 #define __GA_SCENE_H__
 #include "ga_geom.h"
 #include "ga_list.h" 
+#include "ga_img.h"
 
 #define STRING_LENGTH GA_NAME_LENGTH
 

@@ -19,8 +19,4 @@ model_t *model_load(char *path);
 model_t *model_dup(const model_t *m);
 void 	model_free(model_t *m);
 
-typedef struct ray_s{
-	vec_t  start;
-	vec_t  end;
-}ray_t;
 

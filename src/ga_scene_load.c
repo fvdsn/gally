@@ -293,6 +293,9 @@ ga_scene_t *ga_scene_load(char *path){
 
 int main(int argc, char **argv){
 	ga_scene_t *s = NULL;
+	ga_image_t *img = ga_image_new(400,300);
+	ga_image_fill(img,vec_new(0.8,0.4,0.1,1));
+	ga_image_save(img,"out.png");
 	if(argc < 2){
 		fprintf(stderr,"ERROR: a path to the sdl scene file must be given as argument\n");
 		return 1;
