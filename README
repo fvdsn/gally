@@ -1,0 +1,15 @@
+
+GALLY : a 3d rasterizer / raytracer.
+------------------------------------
+
+dependences :
+	- libxml2-dev
+	- opengl-dev
+	- sdl-dev
+compilation :
+	$make
+
+usage :
+	$a.bin xml/example.sdl 
+
+
