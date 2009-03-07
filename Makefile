@@ -1,12 +1,18 @@
 CC = gcc
-FLAGS = -Wall -g -pedantic `xml2-config --cflags`
+FLAGS = -Wall -O3 -pedantic `xml2-config --cflags`
 LIBS = -lm -lpng `xml2-config --libs`
 BIN = a.bin
 
-all : Makefile loader
+all : Makefile raytracer
+
+raytracer: ga_raytrace.o 
+	${CC} ${FLAGS} ${LIBS} -o ${BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raytrace.o
 
 loader: ga_scene_load.o ga_scene.o
 	${CC} ${FLAGS} ${LIBS} -o ${BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o
+
+ga_raytrace.o: src/ga_raytrace.c src/ga_raytrace.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
+	${CC} ${FLAGS} -c src/ga_raytrace.c
 
 ga_scene_load.o: src/ga_scene_load.c src/ga_scene.h ga_math.o ga_geom.o ga_list.o
 	${CC} ${FLAGS} -c src/ga_scene_load.c

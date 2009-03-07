@@ -1,3 +1,5 @@
+#ifndef __GALLY_GEOMETRY_H__
+#define __GALLY_GEOMETRY_H__
 #include "ga_math.h"
 #define GA_MAX_VERT 50000
 typedef struct tri_s{
@@ -18,5 +20,9 @@ typedef struct model_s{
 model_t *model_load(char *path);
 model_t *model_dup(const model_t *m);
 void 	model_free(model_t *m);
+void model_print(const model_t*m);
+
+#endif
+
 
 

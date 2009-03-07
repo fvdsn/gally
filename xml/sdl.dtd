@@ -53,7 +53,7 @@
 >
 <!ELEMENT Obj EMPTY>
 <!ATTLIST Obj
-	file						CDATA			#REQUIRED
+	src						CDATA			#REQUIRED
 	name						ID			#REQUIRED
 >
 

@@ -89,7 +89,7 @@ static void ga_obj_explore(xmlNodePtr n, ga_scene_t *s){
 	char * path	= NULL;
 	char * name	= "unnamed_obj_file";
 	while(a){
-		if(!xmlStrcmp(a->name,(const xmlChar*)"file")){
+		if(!xmlStrcmp(a->name,(const xmlChar*)"src")){
 			path = (char*)a->children->content;
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name = (char*)a->children->content;
@@ -117,6 +117,7 @@ static void ga_diffusematerial_explore(xmlNodePtr n, ga_scene_t *s){
 	while(a){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
 			color	 = vec_parse((char*)a->children->content);
+			color.w = 1.0f;
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
@@ -133,6 +134,7 @@ static void ga_diffusematerial_explore(xmlNodePtr n, ga_scene_t *s){
  */
 static void ga_shape_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *t){
 	xmlAttrPtr a = n->properties;
+	ga_shape_t *shape = NULL;
 	char *geometry = "default_sphere";
 	char *material = "default_material";
 	while(a){
@@ -153,10 +155,10 @@ static void ga_shape_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *t){
 		fprintf(stderr,"ERROR: material '%s' undefined\n", material);
 		return;
 	}
-	ga_transform_add_shape(	t, ga_shape_new(
-			geometry,
-			ga_scene_get_geom(s,geometry),
-			ga_scene_get_material(s,material)	));
+	shape = ga_shape_new(geometry,ga_scene_get_geom(s,geometry),
+					ga_scene_get_material(s,material));
+	ga_list_add(s->shape,shape);
+	ga_transform_add_shape(	t, shape); 
 }
 /**
  * Parse 'Scene' or 'Transform' childrens and various transformations tags to
@@ -226,6 +228,7 @@ static void ga_scene_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"lights")){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"background")){
 			s->bg_color = vec_parse((char*)a->children->content);
+			s->bg_color.w = 1.0f;
 		}
 		a = a->next;
 	}
@@ -290,7 +293,7 @@ ga_scene_t *ga_scene_load(char *path){
 	printf("SUCCESS: Document '%s' succesfully loaded\n",path);
 	return s;	
 }
-
+/*
 int main(int argc, char **argv){
 	ga_scene_t *s = NULL;
 	ga_image_t *img = ga_image_new(400,300);
@@ -303,4 +306,4 @@ int main(int argc, char **argv){
 	s = ga_scene_load(argv[1]);
 	ga_scene_print(s);
 	return 0;
-}
+}*/

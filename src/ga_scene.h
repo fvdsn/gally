@@ -93,9 +93,13 @@ typedef struct ga_scene_s{
 	ga_list_t *active_light;
 	ga_list_t *material;
 	ga_list_t *geom;
+	ga_list_t *shape;
 	ga_transform_t *transform;
+	ga_image_t *img;
 }ga_scene_t;
 ga_scene_t *ga_scene_new(char *name);
+void	ga_scene_set_image(ga_scene_t *s, int sizex, int sizey);
+void	ga_scene_save_image(ga_scene_t *s);
 void	ga_scene_print(ga_scene_t *s);
 void	ga_scene_add_camera(ga_scene_t *s, ga_cam_t *c);
 void	ga_scene_add_light(ga_scene_t *s, ga_light_t *l);

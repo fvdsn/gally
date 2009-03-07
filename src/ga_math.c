@@ -14,7 +14,7 @@ vec_t vec_new(float x, float y, float z, float w){
 	return v;
 }
 vec_t vec_parse(const char *line){
-	vec_t v = vec_new(0,0,0,0);
+	vec_t v = vec_new(1,1,1,1);
 	float *vf = (float*)&v; 
 	const char *lptr = line;
 	char *sptr = NULL;
@@ -42,11 +42,18 @@ vec_t vec_delta(vec_t a, vec_t b){
 	b.z -= a.y;
 	return b;
 }
+vec_t vec_sub(vec_t a, vec_t b){
+	a.x -= b.x;
+	a.y -= b.y;
+	a.z -= b.z;
+	return a;
+}
 vec_t vec_cross(vec_t a, vec_t b){
 	vec_t v;
 	v.x = a.y * b.z - a.z * b.y;
 	v.y = a.z * b.x - a.x * b.z;
 	v.z = a.x * b.y - a.y * b.x;
+	v.w = a.w;
 	return v;
 }
 vec_t vec_scale(float s, vec_t a){

@@ -5,7 +5,7 @@
 #include "ga_img.h"
 
 ga_image_t *ga_image_new(int sizex, int sizey){
-	ga_image_t *i = (ga_image_t*)malloc(sizeof(ga_image_t*));
+	ga_image_t *i = (ga_image_t*)malloc(sizeof(ga_image_t));
 	i->sizex = sizex;
 	i->sizey = sizey;
 	i->pixel = (vec_t*)malloc(sizex*sizey*sizeof(vec_t));
@@ -13,7 +13,7 @@ ga_image_t *ga_image_new(int sizex, int sizey){
 	return i;
 }
 void	ga_image_set_pixel(ga_image_t *i, int x, int y, vec_t color){
-	i->pixel[i->sizey*y + x] = color;
+	i->pixel[i->sizex*(i->sizey-y -1) + x] = color;
 }
 void	ga_image_fill(ga_image_t *img,vec_t color){
 	int i = img->sizex*img->sizey;
