@@ -21,6 +21,7 @@ vec_t vec_add(vec_t a, vec_t b);
 vec_t vec_delta(vec_t a, vec_t b);
 vec_t vec_sub(vec_t a, vec_t b);
 vec_t vec_cross(vec_t a, vec_t b);
+vec_t vec_mult(vec_t a, vec_t b);
 vec_t vec_scale(float s, vec_t a);
 vec_t vec_norm(vec_t a);
 vec_t vec_wnorm(vec_t a);
@@ -32,6 +33,7 @@ float vec_len(vec_t a);
 float vec_dot(vec_t a, vec_t b);
 vec_t vec_print(vec_t a);
 int   vec_equal(vec_t a, vec_t b);
+
 /* fast operations */
 inline void  vec_fsub(vec_t *d, const vec_t *a, const vec_t *b);
 inline void  vec_fcross(vec_t *d, const vec_t *a, const vec_t *b);

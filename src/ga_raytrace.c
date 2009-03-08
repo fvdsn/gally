@@ -3,9 +3,9 @@
 #include <math.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
-#define EPSILON 0.000001
+#define EPSILON 0.000001f
 
-int   ga_ray_intersect(tri_t *tr, vec_t start, vec_t dir, float *t, float*u,float*v){
+int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
 	vec_t edge1; 
 	vec_t edge2; 
 	vec_t pvec; 
@@ -13,27 +13,52 @@ int   ga_ray_intersect(tri_t *tr, vec_t start, vec_t dir, float *t, float*u,floa
 	vec_t qvec;
 	float det;
 	float inv_det;
-	edge1 = vec_sub(tr->vert[1],tr->vert[0]);
-	edge2 = vec_sub(tr->vert[2],tr->vert[0]);
-	pvec  = vec_cross(dir,edge2);
-	det = vec_dot(edge1,pvec);
+	if(vec_fdot(dir,&(tr->norm)) >0){
+		return 0;
+	}
+	vec_fsub(&edge1,tr->vert + 1,tr->vert + 0);
+	vec_fsub(&edge2,tr->vert + 2,tr->vert + 0);
+	vec_fcross(&pvec,dir,&edge2);
+	det = vec_fdot(&edge1,&pvec);
 	if(det > -EPSILON && det < EPSILON){
 		return 0;
 	}
 	inv_det = 1.0f / det;
 	
-	tvec = vec_sub(start,tr->vert[0]);
-	*u = vec_dot(tvec,pvec)*inv_det;
-	if(*u <0.0 || *u > 1.0){
+	vec_fsub(&tvec,start,tr->vert +0);
+	*u = vec_fdot(&tvec,&pvec)*inv_det;
+	if(*u <-EPSILON || *u >= 1.0 + EPSILON){
 		return 0;
 	}
-	qvec = vec_cross(tvec,edge1);
-	*v = vec_dot(dir,qvec)*inv_det;
-	if(*v <0.0f || *u + *v >1.0f){
+	vec_fcross(&qvec,&tvec,&edge1);
+	*v = vec_fdot(dir,&qvec)*inv_det;
+	if(*v <-EPSILON || *u + *v >1.0f +EPSILON){
 		return 0;
 	}
-	*t = vec_dot(edge2,qvec)*inv_det;
+	*t = vec_fdot(&edge2,&qvec)*inv_det;
 	return 1;
+}
+static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm, ga_material_t *mat,ga_scene_t *s){
+	ga_node_t *n = s->light->first;
+	ga_light_t *light;
+	vec_t vl;
+	vec_t color = vec_new(0,0,0,1);
+	float fact;
+	if(n){
+		while(n){
+			light = (ga_light_t*)n->data;
+			vl = vec_norm(vec_sub(light->pos,pos));
+			if((fact = vec_dot(norm,vl)) > 0.0f){
+				color = vec_add(color,vec_scale(fact,vec_mult(mat->color,light->color)));
+			}
+			n = n->next;
+		}
+		return color;
+	}else{
+		fact = -vec_dot(norm,dir);
+		if(fact < 0.0f){ fact = 0.0f; }
+		return vec_scale(fact,mat->color);
+	}
 }
 vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	int i = 0;
@@ -43,9 +68,16 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	model_t *m;
 	ga_node_t *n = s->shape->first;
 	int   first = 1;
-	float t,u,v,_t,_u,_v;
-	float fact;
-	tri_t *tr;	
+	float t = 0.0f;
+	float u = 0.0f;
+	float v = 0.0f;
+	float _t = 0.0f;
+	float _u = 0.0f;
+	float _v = 0.0f;
+	vec_t normal;
+	tri_t *tr = NULL;	
+	vec_t pos;
+	dir = vec_norm(dir);
 	while(n){
 		shape = (ga_shape_t*)n->data;
 		g = shape->geom;
@@ -55,9 +87,8 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 			i = m->tri_count;
 			first = 1;
 			while(i--){
-				if (ga_ray_intersect(m->tri + i,start,dir,&_t,&_u,&_v)){
-					if(vec_dot(dir,(m->tri+i)->norm) < 0.0f &&
-							(first || (!first && _t < t))){
+				if (ga_ray_intersect(m->tri + i,&start,&dir,&_t,&_u,&_v)){
+					if( first || (!first && _t < t)){
 						t = _t;
 						u = _u;
 						v = _v;
@@ -68,13 +99,11 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 				}
 			}
 			if(!first){
-					fact = 0.0f;
-					fact += u*vec_dot(dir,tr->vnorm[1]);
-					fact += v*vec_dot(dir,tr->vnorm[2]);
-					fact += (1.0f-u-v)*vec_dot(dir,tr->vnorm[0]);
-					if(fact < 0){
-						return vec_scale(-fact,material->color);
-					}
+				normal = vec_add(vec_scale(u,tr->vnorm[1]),
+					 vec_add(vec_scale(v,tr->vnorm[2]),
+							vec_scale(1.0f-u-v,tr->vnorm[0])));
+				pos = vec_add(start,vec_scale(t,dir));
+				return ga_ray_shade( pos,dir,normal,material,s );
 			}
 		}
 		n = n->next;
@@ -85,9 +114,9 @@ void ga_ray_render(ga_scene_t *s){
 	vec_t origin 	= s->active_camera->pos;
 	vec_t front  	= s->active_camera->dir;
 	vec_t up	= s->active_camera->up;
-	vec_t right 	= vec_print(vec_norm(vec_cross(front,up)));
+	vec_t right 	= vec_norm(vec_cross(front,up));
 	float fov	= s->active_camera->fov/2.0*3.141592/180.0;
-	vec_t cr = vec_print(vec_scale(tanf(fov),right));
+	vec_t cr = vec_scale(tanf(fov),right);
 	vec_t cu = vec_scale(tanf(fov)*s->img->sizey/(float)s->img->sizex,up);
 	int x = 0;
 	int y = 0;
@@ -116,7 +145,7 @@ int main(int argc, char **argv){
 		fprintf(stderr,"ERROR: you must specify a scene file as argument\n");
 		return 1;
 	}
-	s = ga_scene_load("xml/bunny.sdl");
+	s = ga_scene_load(argv[1]);
 	if(!s->active_camera){
 		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
 		return 1;
@@ -129,33 +158,4 @@ int main(int argc, char **argv){
 	return 0;
 }
 
-/*
-int main(int argc, char **argv){
-	ga_image_t *img = ga_image_new(100,100);
-	tri_t tr;
-	float t,u,v;
-	int i = 100;
-	int j = 100;
-	int k = 4;
-	int r;
-	tr.vert[0] = vec_new(0.05,0.1,0,1);
-	tr.vert[1] = vec_new(0.1,0.9,0,1);
-	tr.vert[2] = vec_new(0.9,0.1,0,1);
-	tri_print(&tr);
-	ga_image_fill(img,vec_new(0,0,0,1));
-	vec_t dir = vec;
-	vec_t start;
-	while(i--){
-		j = 100;
-		while(j--){
-			k = 0;
-			k += ga_ray_intersect(&tr,vec_new(i*0.01,j*0.01,-0.5,0),vec_new(0,0,1,0),
-						&t,&u,&v	)){
-				ga_image_set_pixel(img,i,j,vec_new(u,v,1-u-v,1));
-			}
-		}
-	}
-	ga_image_save(img,"out.png");
-	return 0;
-}*/
 

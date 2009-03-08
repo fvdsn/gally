@@ -39,7 +39,7 @@ vec_t vec_add(vec_t a, vec_t b){
 vec_t vec_delta(vec_t a, vec_t b){
 	b.x -= a.x;
 	b.y -= a.y;
-	b.z -= a.y;
+	b.z -= a.z;
 	return b;
 }
 vec_t vec_sub(vec_t a, vec_t b){
@@ -55,6 +55,12 @@ vec_t vec_cross(vec_t a, vec_t b){
 	v.z = a.x * b.y - a.y * b.x;
 	v.w = a.w;
 	return v;
+}
+vec_t vec_mult(vec_t a, vec_t b){
+	a.x *= b.x;
+	a.y *= b.y;
+	a.z *= b.z;
+	return a;
 }
 vec_t vec_scale(float s, vec_t a){
 	a.x *= s;
@@ -123,6 +129,24 @@ int vec_equal(vec_t a, vec_t b){
 	a = vec_wnorm(a);
 	b = vec_wnorm(b);
 	return (a.x == b.x && a.y == b.y && a.z == b.z);
+}
+inline void  vec_fsub(vec_t *d, const vec_t *a, const vec_t *b){
+	d->x = a->x - b->x;
+	d->y = a->y - b->y;
+	d->z = a->z - b->z;
+}
+inline void  vec_fcross(vec_t *d, const vec_t *a, const vec_t *b){
+	d->x = a->y * b->z - a->z * b->y;
+	d->y = a->z * b->x - a->x * b->z;
+	d->z = a->x * b->y - a->y * b->x;
+}
+inline void  vec_fscale(float f, vec_t *a){
+	a->x*=f;
+	a->y*=f;
+	a->z*=f;
+}
+inline float vec_fdot(const vec_t *a, const vec_t *b){
+	return a->x*b->x + a->y*b->y + a->z*b->z;
 }
 #define V_I(v,i)    ((float*)(&v))[i]
 #define M_IJ(m,i,j) ((float*)(m))[i*4+j]

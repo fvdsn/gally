@@ -22,9 +22,9 @@ static void ga_cam_explore(xmlNodePtr n, ga_scene_t *s){
 		if(!xmlStrcmp(a->name,(const xmlChar*)"position")){
 			position = vec_parse((char*)a->children->content);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"direction")){
-			dir	 = vec_parse((char*)a->children->content);
+			dir	 = vec_norm(vec_parse((char*)a->children->content));
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"up")){
-			up	 = vec_parse((char*)a->children->content);
+			up	 = vec_norm(vec_parse((char*)a->children->content));
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"fovy")){
 			fov	 = (float)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
