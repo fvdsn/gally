@@ -184,7 +184,6 @@ ga_scene_t *ga_scene_new(char *name){
 }
 void ga_scene_set_image(ga_scene_t *s, int sizex, int sizey){
 	s->img = ga_image_new(sizex,sizey);
-	vec_print(s->bg_color);
 	ga_image_fill(s->img,vec_new(0,0,0,1));
 }
 void ga_scene_save_image(ga_scene_t *s){

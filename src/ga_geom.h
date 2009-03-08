@@ -1,7 +1,7 @@
 #ifndef __GALLY_GEOMETRY_H__
 #define __GALLY_GEOMETRY_H__
 #include "ga_math.h"
-#define GA_MAX_VERT 50000
+#define GA_MAX_VERT 500000
 typedef struct tri_s{
 	vec_t norm;
 	vec_t vert[3];

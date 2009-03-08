@@ -169,9 +169,17 @@ model_t *model_load(char *path){
 				tri_load(tri + tri_count, face, i);
 				tri_count++;
 				break;
+			case '#':break;
 			default :
-				printf(".\n");
+				printf("WARNING: feature not implemented in obj format : '%s'\n",line);
 				break;
+		}
+		if(	vert_count >= GA_MAX_VERT
+			||norm_count >= GA_MAX_VERT
+			||tex_count  >= GA_MAX_VERT
+			||tri_count  >= GA_MAX_VERT ){
+			fprintf(stderr,"ERROR: model '%s' too big\n",path);
+			return NULL;
 		}
 	}
 	m = model_new();

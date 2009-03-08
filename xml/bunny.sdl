@@ -3,13 +3,14 @@
 
 <Sdl>
    <Cameras>
-      <Camera position="0 3 -6" direction="0 0 1" up="0 1 0" fovy="60" name="cam0" /> 
+      <Camera position="3 2 10" direction="-0.3 0 -1" up="0 1 0" fovy="40" name="cam0" /> 
    </Cameras>   
    
    <Lights>
-      <PointLight position="0 30 0" intensity="1" color="1 0 0" name="light0" />
-      <PointLight position="0 0 -30" intensity="1" color="0 0 1" name="light0" />
-      <PointLight position="0 15 30" intensity="1" color="0.2 1 0" name="light0" />
+      <PointLight position="0 30 10" intensity="1" color="1 0.95 0.9" name="light0" />
+      <PointLight position="-30 15 0" intensity="1" color="0.5 0.5 0.5" name="light1" />
+      <PointLight position="30 15 0" intensity="1" color="0.5 0.5 0.5" name="light2" />
+      <PointLight position="0 0 30" intensity="1" color="0.3 0.3 0.3" name="light3" />
    </Lights>
    
    <Geometry>
@@ -20,7 +21,7 @@
       <DiffuseMaterial color="0.9 0.9 0.9" name="dif0"/>      
    </Materials>
    
-   <Scene camera="cam0" lights="light0" background="0.3 0.3 0.3">
+   <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
       <Shape geometry="bunny" material="dif0" />
    </Scene>
 </Sdl>

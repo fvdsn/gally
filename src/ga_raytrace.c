@@ -105,7 +105,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 				pos = vec_add(start,vec_scale(t,dir));
 				return ga_ray_shade( pos,dir,normal,material,s );
 			}
-		}
+		} 
 		n = n->next;
 	}
 	return s->bg_color;
@@ -150,8 +150,8 @@ int main(int argc, char **argv){
 		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
 		return 1;
 	}
-	ga_scene_set_image(s,200,200);
-	printf("Starting render ...\n ");
+	ga_scene_set_image(s,150,150);
+	printf("Starting render ...\n");
 	ga_ray_render(s);
 	printf("Done\n");
 	ga_scene_save_image(s);

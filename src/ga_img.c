@@ -12,6 +12,15 @@ ga_image_t *ga_image_new(int sizex, int sizey){
 	memset(i->pixel,0,sizex*sizey*sizeof(vec_t));
 	return i;
 }
+static char float_to_char(float v){
+	if(v >= 1.0f){
+		return (char)255;
+	}else if (v <0.0f){
+		return 0;
+	}else{
+		return (char)(v*255.0);
+	}
+}
 void	ga_image_set_pixel(ga_image_t *i, int x, int y, vec_t color){
 	i->pixel[i->sizex*(i->sizey-y -1) + x] = color;
 }
@@ -42,7 +51,7 @@ void	ga_image_save(ga_image_t *img, char *path){
 		while(j--){
 			k = 4;
 			while(k--){
-				row_ptr[i][j*4+k] = (char)(buf[i*img->sizex*4+j*4+k]*255.0);
+				row_ptr[i][j*4+k] = float_to_char(buf[i*img->sizex*4+j*4+k]);
 			}
 		}
 	}
