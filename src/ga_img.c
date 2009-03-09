@@ -88,4 +88,3 @@ void	ga_image_save(ga_image_t *img, char *path){
 	}
 	free(row_ptr);
 }
-

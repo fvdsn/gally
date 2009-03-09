@@ -99,9 +99,18 @@ static vec_t ga_raster_shade(vec_t pos, vec_t norm, ga_material_t *mat,ga_scene_
 	}
 }
 static void ga_raster_cam_transform(ga_scene_t *s, mat_t *tr){
+	vec_t w = vec_norm(vec_neg(s->active_camera->dir));
+	vec_t u = vec_norm(vec_cross(s->active_camera->up,w));
+	vec_t v = vec_norm(vec_cross(w,u));
+	mat_t *tmp = mat_new_zero();
 	mat_set_2d(s->img->sizex,s->img->sizey,tr);
+	mat_set_ortho(vec_new(-4,-4,-4,1),vec_new(4,4,4,1),tmp);
+	mat_mult(tr,tmp);
+	mat_set_view(s->active_camera->pos,u,v,w,tmp);
+	mat_mult(tr,tmp);
+	mat_free(tmp);
 }
-void ga_raster_scene(ga_scene_t *s){
+void ga_raster_render(ga_scene_t *s){
 	ga_node_t *n = s->shape->first;
 	ga_shape_t *shape;
 	ga_geom_t  *geom;
@@ -141,22 +150,20 @@ void ga_raster_scene(ga_scene_t *s){
 	}
 }
 int main(int argc, char **argv){
-	tri_t tri;
-	mat_t mat;
-	ga_image_t *img = ga_image_new(300,200);
-	tri.vert[0] = vec_new(0  ,0  ,-1,1);
-	tri.vert[1] = vec_new(1  ,0  ,-1,1);
-	tri.vert[2] = vec_new(0  ,1  ,1,1);
-	tri.vcolor[0] = vec_new(1,0,0,1);
-	tri.vcolor[1] = vec_new(0,1,0,1);
-	tri.vcolor[2] = vec_new(0,0,1,1);
-	tri_print(&tri);
-	mat_print(mat_set_2d(300,200,&mat));
-	tri_transform(&tri,&mat);
-	tri_print(&tri);
-	ga_image_fill(img,vec_new(0,0,0,1));
-	ga_raster_triangle(img,&tri);
-	ga_image_save(img,"rout.png");
+	ga_scene_t *s;
+	if(argc < 2){
+		fprintf(stderr,"ERROR: you must specify a scene file as argument\n");
+		return 1;
+	}
+	s = ga_scene_load(argv[1]);
+	if(!s->active_camera){
+		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
+		return 1;
+	}
+	ga_scene_set_image(s,200,200);
+	printf("Starting render ...\n");
+	ga_raster_render(s);
+	printf("Done\n");
+	ga_scene_save_image(s);
 	return 0;
 }
-

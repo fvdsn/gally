@@ -63,6 +63,7 @@ mat_t *mat_set_rot(int naxis, float angle,mat_t *a);
 mat_t *mat_set_trans(vec_t t, mat_t *a);
 mat_t *mat_set_scale(vec_t t, mat_t *a);
 mat_t *mat_set_col(int ncol, vec_t c, mat_t *a);
+mat_t *mat_set_row(int ncol, vec_t c, mat_t *a);
 vec_t  mat_get_col(int ncol, const mat_t *a);
 vec_t  mat_get_row(int nrow, const mat_t *a);
 
