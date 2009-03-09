@@ -261,12 +261,53 @@ mat_t *mat_set_scale(vec_t t, mat_t *a){
 	a->w.w = 1;
 	return a;
 }
-
+mat_t *mat_set_2d(int nx, int ny, mat_t *a){
+	memset(a,0,sizeof(mat_t));
+	a->x.x = nx/2.0;
+	a->y.y = ny/2.0;
+	a->z.z = 1.0;
+	a->w.w = 1.0;
+	a->x.w = (nx-1)/2.0;
+	a->y.w = (ny-1)/2.0;
+	return a;
+}
+mat_t *mat_set_ortho(vec_t lbn, vec_t rtf, mat_t *a){
+	mat_t *b = mat_set_id(mat_new_zero());
+	b->x.w = -(lbn.x+rtf.x)/2.0;
+	b->y.w = -(lbn.y+rtf.y)/2.0;
+	b->z.w = -(lbn.z+rtf.z)/2.0;
+	mat_set_id(a);
+	a->x.x = 2.0/(rtf.x-lbn.x);
+	a->y.y = 2.0/(rtf.y-lbn.y);
+	a->z.z = 2.0/(rtf.z-lbn.z);
+	mat_mult(a,b);
+	mat_free(b);
+	return a;
+}
+mat_t *mat_set_view(vec_t eye, vec_t u, vec_t v, vec_t w, mat_t *a){
+	mat_t *b = mat_set_trans(vec_neg(eye),mat_new_zero());
+	mat_set_row(0,u,a);
+	mat_set_row(1,v,a);
+	mat_set_row(2,w,a);
+	mat_set_row(3,vec_new(0,0,0,1),a);
+	mat_set_col(3,vec_new(0,0,0,1),a);
+	mat_mult(a,b);
+	mat_free(b);
+	return a;
+}
 mat_t *mat_set_col(int ncol, vec_t c,mat_t*a){
 	M_IJ(a,0,ncol) = c.x;
 	M_IJ(a,1,ncol) = c.y;
 	M_IJ(a,2,ncol) = c.z;
 	M_IJ(a,3,ncol) = c.w;
+	return a;
+}
+mat_t *mat_set_persp(float n, float f,mat_t*a){
+	mat_set_id(a);
+	a->z.z = (n+f)/n;
+	a->w.z = 1.0f/n;
+	a->z.w = -f;
+	a->w.w = 0.0f;
 	return a;
 }
 mat_t *mat_set_row(int nrow, vec_t c, mat_t*a){

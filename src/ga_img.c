@@ -1,15 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
+#include <float.h>
 #include <png.h>
 #include "ga_img.h"
 
 ga_image_t *ga_image_new(int sizex, int sizey){
 	ga_image_t *i = (ga_image_t*)malloc(sizeof(ga_image_t));
+	int px = sizex*sizey;
 	i->sizex = sizex;
 	i->sizey = sizey;
 	i->pixel = (vec_t*)malloc(sizex*sizey*sizeof(vec_t));
 	memset(i->pixel,0,sizex*sizey*sizeof(vec_t));
+	i->zbuffer = (float*)malloc(sizex*sizey*sizeof(float));
+	while(px--){
+		i->zbuffer[px] = -FLT_MAX;
+	}
 	return i;
 }
 static char float_to_char(float v){
@@ -23,6 +30,12 @@ static char float_to_char(float v){
 }
 void	ga_image_set_pixel(ga_image_t *i, int x, int y, vec_t color){
 	i->pixel[i->sizex*(i->sizey-y -1) + x] = color;
+}
+void	ga_image_set_zpixel(ga_image_t *i, int x, int y, float z, vec_t color){
+	if(i->zbuffer[i->sizex*(i->sizey-y-1)+x] < z){
+		i->zbuffer[i->sizex*(i->sizey-y-1) + x] = z;
+		ga_image_set_pixel(i,x,y,color);
+	}
 }
 void	ga_image_fill(ga_image_t *img,vec_t color){
 	int i = img->sizex*img->sizey;

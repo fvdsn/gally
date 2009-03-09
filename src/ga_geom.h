@@ -7,10 +7,12 @@ typedef struct tri_s{
 	vec_t vert[3];
 	vec_t vnorm[3];
 	vec_t vtex[3];
+	vec_t vcolor[3];
 }tri_t;
 
 tri_t *tri_print(tri_t *t);
 tri_t *tri_transform(tri_t *t, const mat_t *m);
+void   tri_cpy(tri_t *t, const tri_t *t2);
 
 typedef struct model_s{
 	int tri_count;

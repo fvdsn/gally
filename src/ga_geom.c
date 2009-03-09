@@ -32,9 +32,12 @@ tri_t *tri_print(tri_t *t){
 tri_t *tri_transform(tri_t *t, const mat_t *m){
 	int i = 3;
 	while(i--){
-		t->vert[i] = mat_vmult(m,t->vert[i]);
+		t->vert[i] = vec_point(vec_vec(mat_vmult(m,t->vert[i])));
 	}
 	return t;
+}
+void   tri_cpy(tri_t *t, const tri_t *t2){
+	memcpy(t,t2,sizeof(tri_t));
 }
 void	model_free(model_t*m){
 	free(m->tri);
