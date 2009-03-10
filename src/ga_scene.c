@@ -186,8 +186,8 @@ void ga_scene_set_image(ga_scene_t *s, int sizex, int sizey){
 	s->img = ga_image_new(sizex,sizey);
 	ga_image_fill(s->img,vec_new(0,0,0,1));
 }
-void ga_scene_save_image(ga_scene_t *s){
-	ga_image_save(s->img,"out.png");
+void ga_scene_save_image(ga_scene_t *s,char *path){
+	ga_image_save(s->img,path);
 }
 void	ga_scene_add_camera(ga_scene_t *s, ga_cam_t *c){
 	ga_list_add(s->camera,c);

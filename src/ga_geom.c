@@ -83,6 +83,7 @@ static void cleanline(char *line, int length){
 }
 static void  tri_load(tri_t *tri, int *face, int fcount){
 	int i = 3;
+	vec_t nnorm;
 	if(fcount == 9){
 		i = 3;
 		while(i--){	/*TODO security : check for overflows*/
@@ -107,10 +108,15 @@ static void  tri_load(tri_t *tri, int *face, int fcount){
 		}
 	}
 	if(norm_count){
-		tri->norm = vec_scale(0.3333333333,
+		nnorm = vec_scale(0.3333333333,
 			vec_add( tri->vnorm[0],
 			vec_add( tri->vnorm[1],
 			tri->vnorm[0])));
+		tri->norm = vec_norm(vec_cross(	vec_delta(tri->vert[0],tri->vert[1]),
+					vec_delta(tri->vert[0],tri->vert[2]) ));
+		if(vec_dot(nnorm,tri->norm) < 0){
+			tri->norm = vec_neg(tri->norm);
+		}
 	}
 }
 static model_t *model_new(void){

@@ -76,7 +76,7 @@ vec_t vec_norm(vec_t a){
 		return vec_scale(1.0f/len,a);
 	}
 }
-vec_t vec_wnorm(vec_t a){
+vec_t vec_homog(vec_t a){
 	if(a.w == 0.0f){
 		return a;
 	}else{

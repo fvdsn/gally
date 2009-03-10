@@ -3,8 +3,15 @@
 #include <math.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
-#define EPSILON 0.000001f
+#define EPSILON 0.00001f
 
+/**
+ * return 1 if the ray intersects the triangle, and the normal is facing the
+ * ray. if it is intersecting, t is updated to the distance from start to the
+ * triangle. u and v are set to barycentric coordinates.
+ *
+ * Code is implemented from a paper by Tomas Moller and Ben Trumbore.
+ */
 int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
 	vec_t edge1; 
 	vec_t edge2; 
@@ -38,6 +45,11 @@ int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, f
 	*t = vec_fdot(&edge2,&qvec)*inv_det;
 	return 1;
 }
+/**
+ * Returns the shading color from ray intersection point at pos, view point is
+ * from dir, intersection normal is at norm, surface material is mat, scene is
+ * s
+ */
 static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm, ga_material_t *mat,ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *light;
@@ -60,6 +72,10 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm, ga_material_t *mat,g
 		return vec_scale(fact,mat->color);
 	}
 }
+/**
+ * Returns the color from launching a ray at start in direction dir, in scene
+ * s
+ */
 vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	int i = 0;
 	ga_geom_t *g;
@@ -110,11 +126,14 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	}
 	return s->bg_color;
 }
+/**
+ * Render scene to s->img.
+ */
 void ga_ray_render(ga_scene_t *s){
 	vec_t origin 	= s->active_camera->pos;
-	vec_t front  	= s->active_camera->dir;
-	vec_t up	= s->active_camera->up;
-	vec_t right 	= vec_norm(vec_cross(front,up));
+	vec_t front  	= vec_norm(s->active_camera->dir);
+	vec_t right 	= vec_norm(vec_cross(front,s->active_camera->up));
+	vec_t up	= vec_norm(vec_cross(right,front));
 	float fov	= s->active_camera->fov/2.0*3.141592/180.0;
 	vec_t cr = vec_scale(tanf(fov),right);
 	vec_t cu = vec_scale(tanf(fov)*s->img->sizey/(float)s->img->sizex,up);
@@ -150,7 +169,7 @@ int main(int argc, char **argv){
 		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
 		return 1;
 	}
-	ga_scene_set_image(s,150,150);
+	ga_scene_set_image(s,512,512);
 	printf("Starting render ...\n");
 	ga_ray_render(s);
 	printf("Done\n");

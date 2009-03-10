@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <math.h>
 #include "ga_raster.h"
 #include "ga_scene.h"
 #define EPSILON 0.000001f
@@ -99,12 +100,23 @@ static vec_t ga_raster_shade(vec_t pos, vec_t norm, ga_material_t *mat,ga_scene_
 	}
 }
 static void ga_raster_cam_transform(ga_scene_t *s, mat_t *tr){
+	float fov = s->active_camera->fov;
+	float l,b,n,r,t,f;
 	vec_t w = vec_norm(vec_neg(s->active_camera->dir));
 	vec_t u = vec_norm(vec_cross(s->active_camera->up,w));
 	vec_t v = vec_norm(vec_cross(w,u));
 	mat_t *tmp = mat_new_zero();
+	n = 1.0f;
+	f = 10.0f;
+	r = tanf(fov*3.141592/180.0/2.0)*n;
+	l = -r;
+	t = r*s->img->sizey/s->img->sizex;
+	b = -t;
+	printf("%f\n",t);
 	mat_set_2d(s->img->sizex,s->img->sizey,tr);
-	mat_set_ortho(vec_new(-4,-4,-4,1),vec_new(4,4,4,1),tmp);
+	mat_set_ortho(vec_new(r,t,n,1),vec_new(l,b,f,1),tmp);
+	mat_mult(tr,tmp);
+	mat_set_persp(n,f,tmp);
 	mat_mult(tr,tmp);
 	mat_set_view(s->active_camera->pos,u,v,w,tmp);
 	mat_mult(tr,tmp);
@@ -122,6 +134,7 @@ void ga_raster_render(ga_scene_t *s){
 	int j = 0;
 	mat_t cam_transform;
 	ga_raster_cam_transform(s,&cam_transform);
+	ga_image_fill(s->img,s->bg_color);
 	while(n){
 		shape = (ga_shape_t*)n->data;
 		geom = shape->geom;
@@ -133,6 +146,7 @@ void ga_raster_render(ga_scene_t *s){
 		}
 		i = model->tri_count;
 		while(i--){
+			if((i%100)==0){printf("%d\n",i);}
 			j = 3;
 			tri = model->tri + i;
 			while(j--){
@@ -160,7 +174,7 @@ int main(int argc, char **argv){
 		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
 		return 1;
 	}
-	ga_scene_set_image(s,200,200);
+	ga_scene_set_image(s,800,800);
 	printf("Starting render ...\n");
 	ga_raster_render(s);
 	printf("Done\n");
