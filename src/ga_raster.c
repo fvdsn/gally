@@ -79,7 +79,7 @@ void  ga_raster_triangle(ga_image_t *img,tri_t *tri){
 				color = vec_add( vec_scale(u,tri->vcolor[1]),
 					vec_add( vec_scale(v,tri->vcolor[2]),
 					vec_scale(1-u-v,tri->vcolor[0])));
-				ga_image_set_zpixel(img,x,y,-t,color);
+				ga_image_set_zpixel(img,x,y,t,color);
 			}
 			y++;
 		}
@@ -125,7 +125,7 @@ static void ga_raster_cam_transform(ga_scene_t *s, mat_t *tr){
 	/*to pixel coordinates*/
 	mat_set_2d(s->img->sizex,s->img->sizey,tr);
 	/*to canonical view volume*/
-	mat_set_ortho(vec_new(r,t,n,1),vec_new(l,b,f,1),tmp);
+	mat_set_ortho(vec_new(r,t,-n,1),vec_new(l,b,-f,1),tmp);
 	mat_mult(tr,tmp);
 	/*perspective*/
 	mat_set_persp(n,f,tmp);
