@@ -125,9 +125,12 @@ static void  tri_load(tri_t *tri, int *face, int fcount){
 		tri->norm = vec_norm(vec_cross(	vec_delta(tri->vert[0],tri->vert[1]),
 					vec_delta(tri->vert[0],tri->vert[2]) ));
 		if(vec_dot(nnorm,tri->norm) < 0){
+			/*printf("wrong normal\n");*/
 			tri->norm = vec_neg(tri->norm);
 		}
 	}
+	tri->edge[0] = vec_delta(tri->vert[0],tri->vert[1]);
+	tri->edge[1] = vec_delta(tri->vert[0],tri->vert[2]);
 }
 static model_t *model_new(void){
 	model_t *m = (model_t*)malloc(sizeof(model_t));

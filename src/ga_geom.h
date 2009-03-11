@@ -11,6 +11,7 @@ typedef struct tri_s{
 	vec_t vnorm[3];	/*vertex normals*/
 	vec_t vtex[3];	/*vertex texture coordinates*/
 	vec_t vcolor[3];/*vertex colors*/
+	vec_t edge[2];	/*v0->v1 , v0->v2*/
 }tri_t;
 /**
  * Prints the triangle to the console

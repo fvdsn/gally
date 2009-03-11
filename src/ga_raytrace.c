@@ -11,40 +11,42 @@
  * triangle. u and v are set to barycentric coordinates.
  *
  * Code is implemented from a paper by Tomas Moller and Ben Trumbore.
+ * Some adaptations have been made : First the edge vectors are precomputed,
+ * an early check with the normal is also done. since the computation are
+ * done with floats, some tolerance for rounding errors has been introduced. 
+ *
  */
-int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
-	vec_t edge1; 
-	vec_t edge2; 
+static int   ga_ray_fast_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
 	vec_t pvec; 
 	vec_t tvec;
 	vec_t qvec;
 	float det;
 	float inv_det;
-	if(vec_fdot(dir,&(tr->norm)) >0){
+	if(vec_fdot(dir,&(tr->norm)) > 0.0f){
 		return 0;
 	}
 	/*check if we are not parallel to view direction*/
-	vec_fsub(&edge1,tr->vert + 1,tr->vert + 0);
-	vec_fsub(&edge2,tr->vert + 2,tr->vert + 0);
-	vec_fcross(&pvec,dir,&edge2);
-	det = vec_fdot(&edge1,&pvec);
-	if(det > -EPSILON && det < EPSILON){
+	vec_fcross(&pvec,dir,tr->edge +1);
+	det = vec_fdot(tr->edge,&pvec);
+	if(det < EPSILON){
 		return 0;
 	}
-	inv_det = 1.0f / det;
 	/*compute first barycentric coordinate and check it*/
 	vec_fsub(&tvec,start,tr->vert +0);
-	*u = vec_fdot(&tvec,&pvec)*inv_det;
-	if(*u <-EPSILON || *u >= 1.0 + EPSILON){
+	*u = vec_fdot(&tvec,&pvec);
+	if(*u <-EPSILON || *u >= det + EPSILON){
 		return 0;
 	}
 	/*compute second and third coordinate and check them */
-	vec_fcross(&qvec,&tvec,&edge1);
-	*v = vec_fdot(dir,&qvec)*inv_det;
-	if(*v <-EPSILON || *u + *v >1.0f +EPSILON){
+	vec_fcross(&qvec,&tvec,tr->edge);
+	*v = vec_fdot(dir,&qvec);
+	if(*v <-EPSILON || *u + *v > det + EPSILON){
 		return 0;
 	}
-	*t = vec_fdot(&edge2,&qvec)*inv_det;
+	inv_det = 1.0f/det;
+	*u *= inv_det;
+	*v *= inv_det;
+	*t = vec_fdot(tr->edge+1,&qvec)*inv_det;
 	return 1;
 }
 /**
@@ -109,7 +111,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 			i = m->tri_count;
 			first = 1;
 			while(i--){	/*we iterate over triangles */
-				if (ga_ray_intersect(m->tri + i,&start,&dir,&_t,&_u,&_v)){
+				if (ga_ray_fast_intersect(m->tri + i,&start,&dir,&_t,&_u,&_v)){
 					if( first || (!first && _t < t)){
 						t = _t;
 						u = _u;
