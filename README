@@ -1,15 +1,73 @@
-
-GALLY : a 3d rasterizer / raytracer.
+GALLY : A 3D RASTERIZER / RAYTRACER
+####################################
+      Frédéric van der Essen.
 ------------------------------------
 
-dependences :
-	- libxml2-dev
-	- opengl-dev
-	- sdl-dev
-compilation :
-	$make
+INSTALL : 
+=========
+	You must first get the dependences. They are 'libpng' and 'libxml2'
+	On debian like OS you can install with 
+	'apt-get install libpng-dev libxml2-dev' as root.
 
-usage :
-	$a.bin xml/example.sdl 
+	To compile simply type 'make all in' the Makefile directory. 
 
+USAGE 	:
+=========
+	The resulting binary is called renderer.bin. It can be called with 
+	those arguments. All arguments must be separated by spaces, and 
+	there cannot be space between the equal sign and the argument value.
+
+	Mendatory arguments : 
+	"""""""""""""""""""""
+		-scene=PATH   : the path to the sdl scene file
+	Optional arguments:
+	"""""""""""""""""""
+		-ray(tracer)  : use the raytracer.  (default method)
+		-ras(teriser) : use the rasteriser. (you can't use both 
+							at the same time)
+		-out=PATH     : path to the png output (default: 'out.png') 
+		-sx=INT       : the horizontal rendering size (default:256)
+		-sy=INT       : the vertical rendering size   (default:256)
+		-h(elp)       : displays this message.\n
+	
+	
+	Sdl file format Modifications : 
+	The only supported geometry is the OBJ. The xml syntax is :
+	
+			 <Obj src="PATH" /> 
+
+	The path has to be specified from the renderer.bin directory
+
+	The Obj must have valid vertex normals for a correct rendering. 
+
+
+DOCUMENTATION AND ARCHITECTURE :
+================================
+	The method specification is usually in the .h files, except for static
+	functions. Source files are in the src/ directory.
+
+	ga_math.c	<- Matrix and vectors 
+	ga_geom.c	<- Triangle, Models, Obj file loading. 
+	ga_scene.h	<- scene and scene graph data structure
+	ga_scene.c	<- scene and scene graph data structure implementation
+	ga_scene_load.c	<- sdl file loading
+	ga_img.c	<- image, zbuffer, image save
+	ga_raytrace.c	<- raytracer and raytracer shading
+	ga_raster.c	<- rasteriser
+	ga_list.c	<- linked list
+	ga_main.c	<- parsing arguments, main function
+
+IMPLEMENTATION NOTES :
+======================
+	Currently there is no acceleration data structure for the raytracer, 	
+	so it is much slower than the rasterizer.
+	
+	Object transformations are not taken into account.
+
+	All lights are considered active at all times.
+	
+	field of view specifies the horizontal view angle in degrees. 
+
+	The raytracer doesn't render backfacing faces, making it about two times
+	faster. (early check in intersection test) 
 

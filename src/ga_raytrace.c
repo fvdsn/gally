@@ -3,7 +3,7 @@
 #include <math.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
-#define EPSILON 0.00001f
+#define EPSILON 0.00001f	/*tolerance from numerical errors*/
 
 /**
  * return 1 if the ray intersects the triangle, and the normal is facing the
@@ -23,6 +23,7 @@ int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, f
 	if(vec_fdot(dir,&(tr->norm)) >0){
 		return 0;
 	}
+	/*check if we are not parallel to view direction*/
 	vec_fsub(&edge1,tr->vert + 1,tr->vert + 0);
 	vec_fsub(&edge2,tr->vert + 2,tr->vert + 0);
 	vec_fcross(&pvec,dir,&edge2);
@@ -31,12 +32,13 @@ int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, f
 		return 0;
 	}
 	inv_det = 1.0f / det;
-	
+	/*compute first barycentric coordinate and check it*/
 	vec_fsub(&tvec,start,tr->vert +0);
 	*u = vec_fdot(&tvec,&pvec)*inv_det;
 	if(*u <-EPSILON || *u >= 1.0 + EPSILON){
 		return 0;
 	}
+	/*compute second and third coordinate and check them */
 	vec_fcross(&qvec,&tvec,&edge1);
 	*v = vec_fdot(dir,&qvec)*inv_det;
 	if(*v <-EPSILON || *u + *v >1.0f +EPSILON){
@@ -56,17 +58,21 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm, ga_material_t *mat,g
 	vec_t vl;
 	vec_t color = vec_new(0,0,0,1);
 	float fact;
-	if(n){
+	if(n){	/*if there is a lamp in the scene*/ 
 		while(n){
 			light = (ga_light_t*)n->data;
 			vl = vec_norm(vec_sub(light->pos,pos));
 			if((fact = vec_dot(norm,vl)) > 0.0f){
-				color = vec_add(color,vec_scale(fact,vec_mult(mat->color,light->color)));
+				/* we add to the precedent color the
+				 * illumination from the light */
+				color = vec_add(color,
+					vec_scale(fact,
+					vec_mult(mat->color,vec_scale(light->color.w,light->color))));
 			}
 			n = n->next;
 		}
 		return color;
-	}else{
+	}else{	/* there is no light in the scene so we draw a default shading */
 		fact = -vec_dot(norm,dir);
 		if(fact < 0.0f){ fact = 0.0f; }
 		return vec_scale(fact,mat->color);
@@ -94,7 +100,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	tri_t *tr = NULL;	
 	vec_t pos;
 	dir = vec_norm(dir);
-	while(n){
+	while(n){	/* we iterate over models in scene */
 		shape = (ga_shape_t*)n->data;
 		g = shape->geom;
 		m = g->model;
@@ -102,7 +108,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 		if(m){
 			i = m->tri_count;
 			first = 1;
-			while(i--){
+			while(i--){	/*we iterate over triangles */
 				if (ga_ray_intersect(m->tri + i,&start,&dir,&_t,&_u,&_v)){
 					if( first || (!first && _t < t)){
 						t = _t;
@@ -114,7 +120,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 
 				}
 			}
-			if(!first){
+			if(!first){	/*we got an intersection */
 				normal = vec_add(vec_scale(u,tr->vnorm[1]),
 					 vec_add(vec_scale(v,tr->vnorm[2]),
 							vec_scale(1.0f-u-v,tr->vnorm[0])));
@@ -123,7 +129,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 			}
 		} 
 		n = n->next;
-	}
+	}	/*no intersection, return background color */
 	return s->bg_color;
 }
 /**
@@ -135,8 +141,11 @@ void ga_ray_render(ga_scene_t *s){
 	vec_t right 	= vec_norm(vec_cross(front,s->active_camera->up));
 	vec_t up	= vec_norm(vec_cross(right,front));
 	float fov	= s->active_camera->fov/2.0*3.141592/180.0;
-	vec_t cr = vec_scale(tanf(fov),right);
+	vec_t cr = vec_scale(tanf(fov),right);	/*this vector points to the right
+						  center of the rendering*/
 	vec_t cu = vec_scale(tanf(fov)*s->img->sizey/(float)s->img->sizex,up);
+						/*this vector points to the top
+						 * center */
 	int x = 0;
 	int y = 0;
 	vec_t dir;
@@ -144,9 +153,11 @@ void ga_ray_render(ga_scene_t *s){
 	while(x < s->img->sizex){
 		y = 0;
 		fx = (float)x/(float)s->img->sizex;
-		printf("x:%d\n",x);
-		while(y < s->img->sizey){
+		if(x%10 == 0){printf("%d\n",s->img->sizex - x);}
+		while(y < s->img->sizey){	/*we iterate over x,y pixels */
 			fy = (float)y/(float)s->img->sizey;
+			/*the direction is interpolated from the vectors on the
+			 * side of the screen */
 			dir = vec_norm(vec_add(front,vec_add(
 						vec_sub( vec_scale(fx,cr),
 							vec_scale(1.0-fx,cr)),
@@ -158,6 +169,7 @@ void ga_ray_render(ga_scene_t *s){
 		x++;
 	}
 }
+/*
 int main(int argc, char **argv){
 	ga_scene_t *s;
 	if(argc < 2){
@@ -170,11 +182,11 @@ int main(int argc, char **argv){
 		return 1;
 	}
 	ga_scene_set_image(s,512,512);
-	printf("Starting render ...\n");
+	printf("Rendering pixel collumn ...\n");
 	ga_ray_render(s);
 	printf("Done\n");
-	ga_scene_save_image(s);
+	ga_scene_save_image(s,"ray.png");
 	return 0;
-}
+}*/
 
 

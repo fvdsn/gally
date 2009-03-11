@@ -4,6 +4,7 @@
 #include <stdio.h> 
 
 #define LINE_LENGTH 256
+/* Buffers to store data when we load an obj file */
 static vec_t vert[GA_MAX_VERT];
 static int  vert_count;
 static vec_t norm[GA_MAX_VERT];
@@ -51,6 +52,7 @@ void model_print(const model_t*m){
 		i++;
 	}
 }
+/* reads a line of file into a buffer */
 static int readline(char *buffer, FILE*file, int length){
 	char c;
 	int i = 0;
@@ -72,6 +74,7 @@ static int readline(char *buffer, FILE*file, int length){
 	}
 	return 0;
 }
+/* removes special caracters from lines and replaces them by spaces */
 static void cleanline(char *line, int length){
 	int i = 0;
 	while(i < length){
@@ -81,6 +84,11 @@ static void cleanline(char *line, int length){
 		i++;
 	}
 }
+/** 
+ * creates a triangle from the data in the loading buffers. 
+ * 'face' is the list of numbers in the obj file specifying the face
+ * 'fcount' is the count of those numbers ( 3, 5 or 9) 
+ */
 static void  tri_load(tri_t *tri, int *face, int fcount){
 	int i = 3;
 	vec_t nnorm;
@@ -107,7 +115,9 @@ static void  tri_load(tri_t *tri, int *face, int fcount){
 			tri->vert[i]  = vert[face[i]];
 		}
 	}
-	if(norm_count){
+	if(norm_count){	
+		/* we compute the polygon normal to be on the same
+		   side as the mean of its vertex normals	*/
 		nnorm = vec_scale(0.3333333333,
 			vec_add( tri->vnorm[0],
 			vec_add( tri->vnorm[1],
@@ -126,6 +136,9 @@ static model_t *model_new(void){
 	memcpy(m->tri,tri,tri_count*sizeof(tri_t));
 	return m;
 }
+/**
+ * Loads obj file from path
+ */
 model_t *model_load(char *path){
 	FILE*f = NULL;
 	char line[LINE_LENGTH];
@@ -197,6 +210,7 @@ model_t *model_load(char *path){
 	printf("SUCCESS: Model '%s' successfully loaded\n",path);
 	return m;
 }
+/*TODO loading geometry from xml file */
 model_t *model_parse(	char *v, 
 			char* n, 
 			char* t, 

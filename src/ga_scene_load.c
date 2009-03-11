@@ -6,7 +6,10 @@
 #include <libxml/parser.h>
 #include "ga_scene.h"
 #include "ga_math.h"
-
+/**
+ * SEE http://xmlsoft.org/html/libxml-parser.html 
+ * for documentation on the libxml2 api used in this file
+ */
 /**
  * parse a 'Camera' xml tag, and adds a camera to the scene, with
  * default values if missing tags.

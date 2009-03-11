@@ -126,8 +126,8 @@ vec_t vec_print(vec_t a){
 	return a;
 }
 int vec_equal(vec_t a, vec_t b){
-	a = vec_wnorm(a);
-	b = vec_wnorm(b);
+	a = vec_homog(a);
+	b = vec_homog(b);
 	return (a.x == b.x && a.y == b.y && a.z == b.z);
 }
 inline void  vec_fsub(vec_t *d, const vec_t *a, const vec_t *b){

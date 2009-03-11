@@ -168,12 +168,34 @@ mat_t *mat_set_view(vec_t eye, vec_t u, vec_t v, vec_t w, mat_t *a);
  * Sets a to the perspective matrix with n and f fields values.
  */
 mat_t *mat_set_persp(float n, float f,mat_t*a);
+/**
+ * sets the matrix to rotation matrix perpendicular to selected axis. 
+ * angle in degrees.	TODO NOT IMPLEMENTED 
+ */
 mat_t *mat_set_rot(int naxis, float angle,mat_t *a);
+/**
+ * sets the matrix to translation matrix of vector t
+ */
 mat_t *mat_set_trans(vec_t t, mat_t *a);
+/**
+ * sets the matrix to scaling matrix with coefficent t
+ */
 mat_t *mat_set_scale(vec_t t, mat_t *a);
+/**
+ * replace a collumn in the matrix by a vector 
+ */
 mat_t *mat_set_col(int ncol, vec_t c, mat_t *a);
+/**
+ * replace a row in the matrix by a vector 
+ */
 mat_t *mat_set_row(int ncol, vec_t c, mat_t *a);
+/**
+ * returns a collumn of the matrix
+ */
 vec_t  mat_get_col(int ncol, const mat_t *a);
+/**
+ * returns a row of the matrix.
+ */
 vec_t  mat_get_row(int nrow, const mat_t *a);
 
 

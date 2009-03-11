@@ -3,8 +3,12 @@ FLAGS = -Wall -O3 -pedantic `xml2-config --cflags`
 LIBS = -lm -lpng `xml2-config --libs`
 RAY_BIN = ray.bin
 RAS_BIN = raster.bin
+MAIN_BIN = render.bin
 
-all : Makefile raytracer rasteriser
+all : Makefile main
+
+main: ga_main.o
+	${CC} ${FLAGS} ${LIBS} -o ${MAIN_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o ga_raytrace.o ga_main.o
 
 rasteriser: ga_raster.o 
 	${CC} ${FLAGS} ${LIBS} -o ${RAS_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o
@@ -14,6 +18,9 @@ raytracer: ga_raytrace.o
 
 loader: ga_scene_load.o ga_scene.o
 	${CC} ${FLAGS} ${LIBS} -o ${BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o
+
+ga_main.o : src/ga_main.c ga_raster.o ga_raytrace.o
+	${CC} ${FLAGS} -c src/ga_main.c
 
 ga_raster.o: src/ga_raster.c src/ga_raster.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
 	${CC} ${FLAGS} -c src/ga_raster.c
@@ -40,5 +47,5 @@ ga_list.o: src/ga_list.c src/ga_list.h
 	${CC} ${FLAGS} -c src/ga_list.c
 
 clean:
-	-rm *.o 
+	-rm *.o *.bin
 

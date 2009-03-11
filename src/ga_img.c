@@ -43,6 +43,7 @@ void	ga_image_fill(ga_image_t *img,vec_t color){
 		img->pixel[i] = color;
 	}
 }
+/* TODO : understand the png saving voodoo incantation */
 void	ga_image_save(ga_image_t *img, char *path){
 	png_byte color_type = PNG_COLOR_TYPE_RGBA;
 	png_byte bit_depth = 8;

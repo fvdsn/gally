@@ -3,6 +3,8 @@
 #include "ga_raster.h"
 #include "ga_scene.h"
 #define EPSILON 0.000001f
+/* this is adapted from the raytracing triangle intersection code.
+ * It's like shooting a ray parallel to z axis*/
 int   ga_raster_intersect(const tri_t *tr, const vec_t *start, float *t, float*u,float*v){
 	vec_t edge1; 
 	vec_t edge2; 
@@ -37,8 +39,9 @@ int   ga_raster_intersect(const tri_t *tr, const vec_t *start, float *t, float*u
 	*t = vec_fdot(&edge2,&qvec)*inv_det;
 	return 1;
 }
+/*paint a triangle on the image, using z buffer values to mask hidden pixels */
 void  ga_raster_triangle(ga_image_t *img,tri_t *tri){
-	float minx = tri->vert[2].x;
+	float minx = tri->vert[2].x;	/* triangle bounding box*/
 	float maxx = minx;
 	float miny = tri->vert[2].y;
 	float maxy = miny;
@@ -50,7 +53,7 @@ void  ga_raster_triangle(ga_image_t *img,tri_t *tri){
 	int i = 2;
 	vec_t color;
 	vec_t start;
-	while(i--){
+	while(i--){	/*compute triangle bounding box */
 		if(tri->vert[i].x < minx){
 			minx = tri->vert[i].x;
 		}else if(tri->vert[i].x > maxx){
@@ -63,11 +66,15 @@ void  ga_raster_triangle(ga_image_t *img,tri_t *tri){
 		}
 	}
 	if(minx > 0.0f){ x = (int)minx; }
-	while(x < img->sizex && x < (maxx+1)){
+	while(x < img->sizex && x < (maxx+1)){/*we iterate over pixels in BB*/
 		y = 0;
 		if(miny > 0.0f){ y = (int)miny; }
 		while(y < img->sizey && y < (maxy+1)){
 			start = vec_new(x,y,0,0);
+			/* if this pixel is in the triangle we color it by
+			 * interpolating the vertex colors and vertex z
+			 * values
+			 */
 			if(ga_raster_intersect(tri,&start,&t,&u,&v)){
 				color = vec_add( vec_scale(u,tri->vcolor[1]),
 					vec_add( vec_scale(v,tri->vcolor[2]),
@@ -79,6 +86,8 @@ void  ga_raster_triangle(ga_image_t *img,tri_t *tri){
 		x++;
 	}
 }
+/* compute the shading of a point in the scene. Same as in raytracing,
+ * without shadow check, and only done once per vertex */
 static vec_t ga_raster_shade(vec_t pos, vec_t norm, ga_material_t *mat,ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *light;
@@ -99,6 +108,7 @@ static vec_t ga_raster_shade(vec_t pos, vec_t norm, ga_material_t *mat,ga_scene_
 		return mat->color;
 	}
 }
+/*computes the camera view transform matrix*/
 static void ga_raster_cam_transform(ga_scene_t *s, mat_t *tr){
 	float fov = s->active_camera->fov;
 	float l,b,n,r,t,f;
@@ -112,16 +122,20 @@ static void ga_raster_cam_transform(ga_scene_t *s, mat_t *tr){
 	l = -r;
 	t = r*s->img->sizey/s->img->sizex;
 	b = -t;
-	printf("%f\n",t);
+	/*to pixel coordinates*/
 	mat_set_2d(s->img->sizex,s->img->sizey,tr);
+	/*to canonical view volume*/
 	mat_set_ortho(vec_new(r,t,n,1),vec_new(l,b,f,1),tmp);
 	mat_mult(tr,tmp);
+	/*perspective*/
 	mat_set_persp(n,f,tmp);
 	mat_mult(tr,tmp);
+	/*camera position*/
 	mat_set_view(s->active_camera->pos,u,v,w,tmp);
 	mat_mult(tr,tmp);
 	mat_free(tmp);
 }
+/*renders the scene to s->img */
 void ga_raster_render(ga_scene_t *s){
 	ga_node_t *n = s->shape->first;
 	ga_shape_t *shape;
@@ -132,10 +146,10 @@ void ga_raster_render(ga_scene_t *s){
 	tri_t  tri_tmp;
 	int i = 0;
 	int j = 0;
-	mat_t cam_transform;
+	mat_t cam_transform;	/*the transformation matrix*/
 	ga_raster_cam_transform(s,&cam_transform);
 	ga_image_fill(s->img,s->bg_color);
-	while(n){
+	while(n){	/*iterate over shapes*/
 		shape = (ga_shape_t*)n->data;
 		geom = shape->geom;
 		model = geom->model;
@@ -145,11 +159,11 @@ void ga_raster_render(ga_scene_t *s){
 			return;
 		}
 		i = model->tri_count;
-		while(i--){
+		while(i--){	/*iterate over triangles*/
 			if((i%100)==0){printf("%d\n",i);}
 			j = 3;
 			tri = model->tri + i;
-			while(j--){
+			while(j--){	/*light the vertexes*/
 				tri->vcolor[j] = ga_raster_shade(tri->vert[j],
 								tri->vnorm[j],
 								material,
@@ -157,12 +171,15 @@ void ga_raster_render(ga_scene_t *s){
 
 			}
 			tri_cpy(&tri_tmp,model->tri + i);
+			/*transform triangle*/
 			tri_transform(&tri_tmp,&cam_transform);
+			/*paint the triangle*/
 			ga_raster_triangle(s->img,&tri_tmp);
 		}
 		n = n->next;
 	}
 }
+/*
 int main(int argc, char **argv){
 	ga_scene_t *s;
 	if(argc < 2){
@@ -175,9 +192,9 @@ int main(int argc, char **argv){
 		return 1;
 	}
 	ga_scene_set_image(s,800,800);
-	printf("Starting render ...\n");
+	printf("Rendering polygon number ...\n");
 	ga_raster_render(s);
 	printf("Done\n");
-	ga_scene_save_image(s);
+	ga_scene_save_image(s,"raster.png");
 	return 0;
-}
+}*/
