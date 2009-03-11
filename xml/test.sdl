@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE Sdl SYSTEM "sdl.dtd">
+
+<Sdl>
+   <Cameras>
+      <Camera position="5 5 5" direction="-1 -1 -1" up="0 1 0" fovy="45" name="cam0" /> 
+   </Cameras>   
+   
+   <Lights>
+      <PointLight position="5 5 5" intensity="1" color="1 1 1" name="light0" />
+   </Lights>
+   
+   <Geometry>
+   	<Obj src="xml/obj/teapot.obj" name="bunny" />
+   </Geometry>
+   
+   <Materials>
+      <DiffuseMaterial color="0.9 0.9 0.9" name="dif0"/>      
+   </Materials>
+   
+   <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
+      <Shape geometry="bunny" material="dif0" />
+   </Scene>
+</Sdl>
