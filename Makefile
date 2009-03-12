@@ -1,6 +1,6 @@
 CC = gcc
 FLAGS = -Wall -O3 -pedantic `xml2-config --cflags`
-LIBS = -lm -lpng `xml2-config --libs`
+LIBS = -lm -lpng -lpthread `xml2-config --libs`
 RAY_BIN = ray.bin
 RAS_BIN = raster.bin
 MAIN_BIN = render.bin

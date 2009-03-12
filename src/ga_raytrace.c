@@ -1,8 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <pthread.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
+
+
+
 #define EPSILON 0.00001f	/*tolerance from numerical errors*/
 
 /**
@@ -134,9 +138,43 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	}	/*no intersection, return background color */
 	return s->bg_color;
 }
-/**
- * Render scene to s->img.
- */
+/* render a part of the render image to the scene output buffer.
+ * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
+static void *ga_ray_thread_func(void *data){
+	ga_ray_thread_data_t *td = (ga_ray_thread_data_t*)data;
+	vec_t dir;
+	int x = td->px;	/*pixel coordinate*/
+	int y = td->py;
+	float fx,fy;
+	while(x < td->sx){
+		y = td->py;
+		fx = (float)x/(float)td->scene->img->sizex;
+		if((x%(10*GA_THREAD_COUNT)) == 0){
+			printf("thread %d, line %d\n",td->id,td->sx - x);
+		}
+		while(y < td->sy){	/*iterate over pixels */
+			fy = (float)y/(float)td->scene->img->sizey;
+			/*compute direction to shoot ray */
+			dir = vec_norm(vec_add(td->front,vec_add(
+						vec_sub( vec_scale(fx,td->cr),
+							vec_scale(1.0-fx,td->cr)),
+						vec_sub( vec_scale(fy,td->cu),
+							vec_scale(1.0-fy,td->cu)))));
+			/*launch the ray and sets the result in the image */
+			ga_image_set_pixel(td->scene->img,x,y,
+					ga_ray_trace(td->scene,td->origin,dir));
+			y++;
+		}
+		x++;
+	}
+	return NULL;
+}
+/* thread parameters */
+static ga_ray_thread_data_t  thread_data[GA_THREAD_COUNT];
+/* thread references */
+static pthread_t	thread[GA_THREAD_COUNT];
+
+/* renders the scene to s-img with raytracing */
 void ga_ray_render(ga_scene_t *s){
 	vec_t origin 	= s->active_camera->pos;
 	vec_t front  	= vec_norm(s->active_camera->dir);
@@ -148,29 +186,34 @@ void ga_ray_render(ga_scene_t *s){
 	vec_t cu = vec_scale(tanf(fov)*s->img->sizey/(float)s->img->sizex,up);
 						/*this vector points to the top
 						 * center */
-	int x = 0;
-	int y = 0;
-	vec_t dir;
-	float fx, fy;
-	while(x < s->img->sizex){
-		y = 0;
-		fx = (float)x/(float)s->img->sizex;
-		if(x%10 == 0){printf("%d\n",s->img->sizex - x);}
-		while(y < s->img->sizey){	/*we iterate over x,y pixels */
-			fy = (float)y/(float)s->img->sizey;
-			/*the direction is interpolated from the vectors on the
-			 * side of the screen */
-			dir = vec_norm(vec_add(front,vec_add(
-						vec_sub( vec_scale(fx,cr),
-							vec_scale(1.0-fx,cr)),
-						vec_sub( vec_scale(fy,cu),
-							vec_scale(1.0-fy,cu)))));
-			ga_image_set_pixel(s->img,x,y,ga_ray_trace(s,origin,dir));
-			y++;
+	int i = GA_THREAD_COUNT;
+	int dy = (s->img->sizey / GA_THREAD_COUNT) + 1;
+	while(i--){
+		thread_data[i].id = i;
+		thread_data[i].front = front;
+		thread_data[i].origin = origin;
+		thread_data[i].cu = cu;
+		thread_data[i].cr = cr;
+		thread_data[i].scene = s;
+		thread_data[i].px = 0;
+		thread_data[i].sx = s->img->sizex;
+		if(dy*(i+1) > s->img->sizey){
+			thread_data[i].sy = s->img->sizey;
+		}else{
+			thread_data[i].sy = dy*(i+1);
 		}
-		x++;
+		thread_data[i].py = dy*i;
+		if(pthread_create(thread + i, NULL,ga_ray_thread_func,thread_data + i)){
+			fprintf(stderr,"ERROR: couldn't create render thread\n");
+			return;
+		}
+	}
+	i = GA_THREAD_COUNT;
+	while(i--){
+		pthread_join(thread[i],NULL);
 	}
 }
+
 /*
 int main(int argc, char **argv){
 	ga_scene_t *s;
