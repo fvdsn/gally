@@ -59,15 +59,44 @@ DOCUMENTATION AND ARCHITECTURE :
 
 IMPLEMENTATION NOTES :
 ======================
-	Currently there is no acceleration data structure for the raytracer, 	
-	so it is much slower than the rasterizer.
+	Currently there is no acceleration data structure for the raytracer, so
+	it is much slower than the rasterizer.
 	
 	Object transformations are not taken into account.
 
-	All lights are considered active at all times.
+	All lights are considered active at all times, but multiple lights are
+	taken into account both with the raytracer and rasteriser. 
 	
 	field of view specifies the horizontal view angle in degrees. 
 
 	The raytracer doesn't render backfacing faces, making it about two times
 	faster. (early check in intersection test) 
+
+	Ray triangle algorithm is based on a paper by Tomas Moller and Ben 
+	Trumbore.
+
+	The raytracer is multithreaded with 4 threads by default. this can be 
+	changed with the define in src/ga_raytrace.h 
+
+	the obj loader has a 500 000 vertex and face limit to simplify the 
+	implementation. It will be removed when it will be a limiting factor. if
+	bigger obj are needed, you can change the define in src/ga_geom.h.
+
+
+DIFFICULTIES ENCOUNTERED:
+=========================
+	Implementing it was quite straightforward, this is a list of non-trivial
+	problems I encountered and their solution :
+	- mean of the vertex normals doesn't point in the same direction as the
+	triangle normal. 
+	- vertex order is not always respected.
+	-> since i needed the triangle normal i computed it with dot product,
+	and checked that it's dot product with the mean of the vertex normals
+	couldn't be negative.
+
+	Numerical rounding errors in ray-triangle intersections. -> I added an 
+	epsilon to the comparisons. 
+
+	- relative links in xml : suprisingly hard to implement, so it's not 
+	solved yet. 
 

@@ -179,22 +179,3 @@ void ga_raster_render(ga_scene_t *s){
 		n = n->next;
 	}
 }
-/*
-int main(int argc, char **argv){
-	ga_scene_t *s;
-	if(argc < 2){
-		fprintf(stderr,"ERROR: you must specify a scene file as argument\n");
-		return 1;
-	}
-	s = ga_scene_load(argv[1]);
-	if(!s->active_camera){
-		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
-		return 1;
-	}
-	ga_scene_set_image(s,800,800);
-	printf("Rendering polygon number ...\n");
-	ga_raster_render(s);
-	printf("Done\n");
-	ga_scene_save_image(s,"raster.png");
-	return 0;
-}*/

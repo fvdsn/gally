@@ -5,8 +5,6 @@
 #include "ga_raytrace.h"
 #include "ga_img.h"
 
-
-
 #define EPSILON 0.00001f	/*tolerance from numerical errors*/
 
 /**
@@ -213,25 +211,4 @@ void ga_ray_render(ga_scene_t *s){
 		pthread_join(thread[i],NULL);
 	}
 }
-
-/*
-int main(int argc, char **argv){
-	ga_scene_t *s;
-	if(argc < 2){
-		fprintf(stderr,"ERROR: you must specify a scene file as argument\n");
-		return 1;
-	}
-	s = ga_scene_load(argv[1]);
-	if(!s->active_camera){
-		fprintf(stderr,"ERROR: the scene doesn't have an active camera \n");
-		return 1;
-	}
-	ga_scene_set_image(s,512,512);
-	printf("Rendering pixel collumn ...\n");
-	ga_ray_render(s);
-	printf("Done\n");
-	ga_scene_save_image(s,"ray.png");
-	return 0;
-}*/
-
 
