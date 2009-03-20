@@ -172,7 +172,7 @@ mat_t *mat_set_persp(float n, float f,mat_t*a);
  * sets the matrix to rotation matrix perpendicular to selected axis. 
  * angle in degrees.	TODO NOT IMPLEMENTED 
  */
-mat_t *mat_set_rot(int naxis, float angle,mat_t *a);
+mat_t *mat_set_rot(vec_t dir, float angle,mat_t *a);
 /**
  * sets the matrix to translation matrix of vector t
  */

@@ -66,26 +66,6 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 	color.w = intensity;
 	ga_scene_add_light(s,ga_light_new(name,position,color));
 }
-/**
- * parse a 'Sphere' xml tag, and adds a Sphere to the scene, with
- * default values if missing attributes.
- */
-static void ga_sphere_explore(xmlNodePtr n, ga_scene_t *s){
-	xmlAttrPtr a 	= n->properties;
-	float radius	= 0.5f;
-	char * name	= "unnamed_sphere";
-	while(a){
-		if(!xmlStrcmp(a->name,(const xmlChar*)"radius")){
-			radius= (float)strtod((char*)a->children->content,NULL);
-		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
-			name	 = (char*)a->children->content;
-		}else{
-			fprintf(stderr,"WARNING: unimplemented sphere property '%s' \n",(const char*)a->name);
-		}
-		a = a->next;
-	}
-	ga_scene_add_geom(s,ga_geom_new_sphere(name,radius));
-}
 static void ga_obj_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
 	model_t *m	= NULL;
@@ -129,6 +109,111 @@ static void ga_diffusematerial_explore(xmlNodePtr n, ga_scene_t *s){
 		a = a->next;
 	}
 	ga_scene_add_material(s,ga_material_new_diffuse(name,color));
+}
+static void ga_phongmaterial_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	vec_t color 	= vec_new(1,1,1,1);
+	float power = 2.0;
+	char * name	= "unnamed_phong_material";
+	while(a){
+		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
+			color	 = vec_parse((char*)a->children->content);
+			color.w = 1.0f;
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			name	 = (char*)a->children->content;
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"shininess")){
+			power = (float)strtod((char*)a->children->content,NULL);
+		}else{
+			fprintf(stderr,"WARNING: unimplemented phong material property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	ga_scene_add_material(s,ga_material_new_phong(name,color,power));
+}
+static void ga_combmaterial_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	int comb_weight_count = 0;
+	float comb_weight[GA_MAX_COMB_MATERIAL];
+	int comb_material_count = 0;
+	ga_material_t *comb_material[GA_MAX_COMB_MATERIAL];
+	ga_material_t *comb = NULL;
+	char * name	= "unnamed_comb_material";
+	int i = 0;
+	while(a){
+		if(!xmlStrncmp(a->name,(const xmlChar*)"material",8)){
+			i = atoi((const char*)a->name + 8) -1;
+			if(i >= 0 && i < GA_MAX_COMB_MATERIAL){
+				comb_material[i] = ga_scene_get_material(s,
+						(char*)a->children->content);
+				if(i+1 > comb_material_count){
+					comb_material_count = i+1;
+				}
+			}else{
+				fprintf(stderr,"ERROR: sub material index out of range : %d\n",i);
+			}
+		}else if(!xmlStrncmp(a->name,(const xmlChar*)"weight",6)){
+			i = atoi((const char*)a->name + 6) -1;
+			if(i >= 0 && i < GA_MAX_COMB_MATERIAL){
+				comb_weight[i] =(float)strtod((char*)a->children->content,NULL);
+				if(i+1 > comb_weight_count){
+					comb_weight_count = i+1;
+				}
+			}else{
+				fprintf(stderr,"ERROR: weight index out of range : %d\n",i);
+			}
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			name	 = (char*)a->children->content;
+		}else{
+			fprintf(stderr,"WARNING: unimplemented combinaison material property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	if(comb_weight_count == comb_material_count){
+		i = comb_weight_count;
+		comb = ga_material_new_comb(name);
+		while(i--){
+			ga_material_add_comb(comb,
+				ga_material_new_blending("blending",
+							comb_weight[i],
+							comb_material[i] ));
+		}
+		ga_scene_add_material(s,comb);
+	}else{
+		fprintf(stderr,"WARNING: weight index doesn't match material index : %d, %d \n",
+				comb_weight_count,comb_material_count);
+	}
+}
+static void ga_flatmaterial_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	vec_t color 	= vec_new(1,1,1,1);
+	char * name	= "unnamed_flat_material";
+	while(a){
+		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
+			color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			name	 = (char*)a->children->content;
+		}else{
+			fprintf(stderr,"WARNING: unimplemented flat material property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	ga_scene_add_material(s,ga_material_new_flat(name,color));
+}
+static void ga_emitmaterial_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	vec_t color 	= vec_new(1,1,1,1);
+	char * name	= "unnamed_phong_material";
+	while(a){
+		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
+			color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			name	 = (char*)a->children->content;
+		}else{
+			fprintf(stderr,"WARNING: unimplemented emit material property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	ga_scene_add_material(s,ga_material_new_emit(name,color));
 }
 /**
  * Parse a 'Shape' xml tag, checks that geometry and material attributes
@@ -249,8 +334,14 @@ static void ga_xml_explore(xmlNodePtr n, ga_scene_t *s){
 				ga_pointlight_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"DiffuseMaterial")){
 				ga_diffusematerial_explore(n,s);
-			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Sphere")){
-				ga_sphere_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"PhongMaterial")){
+				ga_phongmaterial_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"FlatMaterial")){
+				ga_flatmaterial_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"LinearCombinedMaterial")){
+				ga_combmaterial_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"EmitMaterial")){
+				ga_emitmaterial_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Obj")){
 				ga_obj_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Scene")){

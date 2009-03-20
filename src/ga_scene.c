@@ -33,14 +33,54 @@ void	ga_light_print(ga_light_t*l){
 			l->color.w, l->name);
 }
 
-
-ga_material_t *ga_material_new_diffuse(char *name, vec_t color){
+static ga_material_t *ga_material_new(char *name){
 	ga_material_t*m = (ga_material_t*)malloc(sizeof(ga_material_t));
+	memset(m,0,sizeof(ga_material_t));
 	strncpy(m->name,name,STRING_LENGTH);
+	return m;
+}
+ga_material_t *ga_material_new_diffuse(char *name, vec_t color){
+	ga_material_t*m = ga_material_new(name);
 	m->type = GA_MATERIAL_DIFFUSE;
 	m->color = color;
 	return m;
 }
+ga_material_t *ga_material_new_phong(char *name, vec_t color, float power){
+	ga_material_t*m = ga_material_new(name);
+	m->type = GA_MATERIAL_PHONG;
+	m->color = color;
+	m->power = power;
+	return m;
+}
+ga_material_t *ga_material_new_blending(char *name, float alpha, ga_material_t *c){
+	ga_material_t*m = ga_material_new(name);
+	m->type = GA_MATERIAL_BLENDING;
+	m->alpha = alpha;
+	m->child = c;
+	return m;
+}	
+ga_material_t *ga_material_new_comb(char *name){
+	ga_material_t *m = ga_material_new(name);
+	m->type = GA_MATERIAL_COMB;
+	m->comb = ga_list_new();
+	return m;
+}
+ga_material_t *ga_material_new_flat(char *name,vec_t color){
+	ga_material_t *m = ga_material_new(name);
+	m->type = GA_MATERIAL_FLAT;
+	m->color = color;
+	return m;
+}
+ga_material_t *ga_material_new_emit(char *name,vec_t color){
+	ga_material_t *m = ga_material_new(name);
+	m->type = GA_MATERIAL_EMIT;
+	m->color = color;
+	return m;
+}
+void	ga_material_add_comb(ga_material_t *mat, const ga_material_t *comb){
+	ga_list_add(mat->comb,comb);
+}
+
 void	ga_material_print(ga_material_t *m){
 	switch(m->type){
 		case GA_MATERIAL_DIFFUSE:
@@ -52,32 +92,14 @@ void	ga_material_print(ga_material_t *m){
 			printf("<UnknownKindMaterial />\n");
 	}
 }
-ga_geom_t *ga_geom_new_sphere(char *name, float radius){
-	ga_geom_t*g = (ga_geom_t*)malloc(sizeof(ga_geom_t));
-	strncpy(g->name,name,STRING_LENGTH);
-	g->type = GA_GEOM_SPHERE;
-	g->radius = radius;
-	return g;
-}
 ga_geom_t *ga_geom_new_model(char *name, model_t *m){
 	ga_geom_t*g = (ga_geom_t*)malloc(sizeof(ga_geom_t));
 	strncpy(g->name,name,STRING_LENGTH);
-	g->type = GA_GEOM_MODEL;
 	g->model = m;
 	return g;
 }
 void	ga_geom_print(ga_geom_t*g){
-	switch(g->type){
-		case GA_GEOM_SPHERE:
-			printf("<Sphere radius='%f' name='%s' />\n",
-					g->radius, g->name);
-			break;
-		case GA_GEOM_MODEL:
-			printf("<Obj file='TODO' name='%s' />\n",g->name);
-			break;
-		default:
-			printf("<UnknownGeometry />\n");
-	}
+	printf("<Obj file='TODO' name='%s' />\n",g->name);
 }
 ga_shape_t *ga_shape_new(char*name, ga_geom_t*g, ga_material_t *m){
 	ga_shape_t*s = (ga_shape_t*)malloc(sizeof(ga_shape_t));
@@ -124,7 +146,7 @@ ga_transform_t *ga_transform_rotate(vec_t param, float angle){
 	t->angle = angle;
 	t->param = param;
 	t->matrix = mat_new_zero();
-	mat_set_rot(0,0,t->matrix);/*TODO*/
+	mat_set_rot(param,angle,t->matrix);/*TODO*/
 	return t;
 }
 void ga_transform_add_child(ga_transform_t *p, ga_transform_t *c){

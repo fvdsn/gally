@@ -3,7 +3,7 @@
 
 <Sdl>
    <Cameras>
-      <Camera position="3 2 10" direction="-0.5 0 -1" up="0 1 0" fovy="40" name="cam0" /> 
+      <Camera position="3 2 10" direction="-0.5 0 -1" up="0 1 0" fovy="45" name="cam0" /> 
    </Cameras>   
    
    <Lights>
@@ -18,10 +18,17 @@
    </Geometry>
    
    <Materials>
-      <DiffuseMaterial color="0.9 0.9 0.9" name="dif0"/>      
+      <FlatMaterial color="0.1 0.0 0.0" name="mat0_flat"/>      
+      <DiffuseMaterial color="0.5 0.2 0.0" name="mat0_dif"/>      
+      <PhongMaterial color="0.5 0.5 0.5" shininess="20" name="mat0_phong"/>      
+      <LinearCombinedMaterial 
+      	material1="mat0_flat" 	weight1="1"
+      	material2="mat0_dif" 	weight2="1"
+      	material3="mat0_phong" 	weight3="1"
+      name="mat0"/>      
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
-      <Shape geometry="bunny" material="dif0" />
+      <Shape geometry="bunny" material="mat0" />
    </Scene>
 </Sdl>

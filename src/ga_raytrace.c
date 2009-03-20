@@ -51,28 +51,84 @@ static int   ga_ray_fast_intersect(const tri_t *tr, const vec_t *start, const ve
 	*t = vec_fdot(tr->edge+1,&qvec)*inv_det;
 	return 1;
 }
+static void ga_material_shade(	vec_t *color, 
+				const vec_t *pos,
+				const vec_t *dir, 
+				const vec_t *norm, 
+				const vec_t *ldir, 
+				const vec_t *lcol,
+				const vec_t *uv,
+				const ga_material_t *mat){
+	float fact = 0.0f;
+	float power = 0.0f;
+	vec_t tmp_color = vec_new(0,0,0,1);
+	ga_node_t *n;
+	ga_material_t *comb;
+	vec_t r;
+	switch(mat->type){
+		case GA_MATERIAL_PHONG:
+			r = vec_sub(
+				vec_scale(2.0,vec_scale(vec_dot(*norm,*ldir),*norm)),
+				*ldir);	
+			if((fact = vec_dot(r,vec_neg(*dir))) > 0.0f){
+				power = powf(fact,mat->power);
+				*color = vec_add(*color,
+					vec_scale( power,
+						vec_mult(mat->color,*lcol)));
+			}
+			break;
+		case GA_MATERIAL_DIFFUSE:
+			if((fact = vec_dot(*norm,*ldir)) > 0.0f){
+				*color = vec_add(*color,
+					vec_scale(fact,vec_mult(mat->color,*lcol)));
+			}
+			break;
+		case GA_MATERIAL_EMIT:
+			*color = vec_add(*color,mat->color);
+			break;
+		case GA_MATERIAL_FLAT:
+			*color = vec_add(*color,vec_mult(mat->color,*lcol));
+			break;
+		case GA_MATERIAL_BLENDING:
+			ga_material_shade(&tmp_color,pos,dir,norm,ldir,lcol,uv,mat->child);
+			*color = vec_add(*color,vec_scale(mat->alpha,tmp_color));
+			break;
+		case GA_MATERIAL_COMB:
+			n = mat->comb->first;
+			while(n){
+				comb = (ga_material_t*)n->data;
+				ga_material_shade(color,pos,dir,norm,ldir,lcol,uv,comb);
+				n = n->next;
+			}
+			break;
+		default:break;
+	}
+}
 /**
  * Returns the shading color from ray intersection point at pos, view point is
  * from dir, intersection normal is at norm, surface material is mat, scene is
  * s
  */
-static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm, ga_material_t *mat,ga_scene_t *s){
+static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *mat,ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *light;
-	vec_t vl;
+	vec_t ldir;
 	vec_t color = vec_new(0,0,0,1);
+	vec_t uv = vec_new(0,0,0,1);
 	float fact;
+	dir = vec_norm(dir);
 	if(n){	/*if there is a lamp in the scene*/ 
 		while(n){
 			light = (ga_light_t*)n->data;
-			vl = vec_norm(vec_sub(light->pos,pos));
-			if((fact = vec_dot(norm,vl)) > 0.0f){
-				/* we add to the precedent color the
-				 * illumination from the light */
-				color = vec_add(color,
-					vec_scale(fact,
-					vec_mult(mat->color,vec_scale(light->color.w,light->color))));
-			}
+			ldir = vec_norm(vec_sub(light->pos,pos));
+			ga_material_shade(	&color,
+						&pos,
+						&dir,
+						&norm,
+						&ldir,
+						&(light->color),
+						&uv,
+						mat);
 			n = n->next;
 		}
 		return color;

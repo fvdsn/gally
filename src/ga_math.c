@@ -243,8 +243,25 @@ mat_t *mat_set_id(mat_t *a){
 	a->w.w = 1;
 	return a;
 }
-mat_t *mat_set_rot(int naxis, float angle,mat_t *a){
-	return NULL;
+mat_t *mat_set_rot(vec_t l, float angle,mat_t *a){
+	float c,s;
+	angle = angle*3.141592f/180.0f;
+	c = cosf(angle);
+	s = sinf(angle);
+	mat_set_id(a);
+	a->x.x = l.x*l.x + (1.0f - l.x*l.x)*c;
+	a->y.y = l.y*l.y + (1.0f - l.y*l.y)*c;
+	a->z.z = l.z*l.z + (1.0f - l.z*l.z)*c;
+
+	a->x.y = l.x*l.y*(1.0f - c) - l.z*s;
+	a->y.z = l.x*l.y*(1.0f - c) + l.z*s;
+
+	a->x.z = l.x*l.z*(1.0f - c) + l.y*s;
+	a->z.x = l.x*l.z*(1.0f - c) - l.y*s;
+
+	a->y.z = l.y*l.z*(1.0f - c) - l.x*s;
+	a->z.y = l.y*l.z*(1.0f - c) + l.x*s;
+	return a;
 }
 mat_t *mat_set_trans(vec_t t, mat_t *a){
 	mat_set_id(a);
