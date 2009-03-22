@@ -25,8 +25,6 @@
  * transformations are currently not used by the renderer.
  */
 
-
-
 /*------- CAMERA --------*/
 typedef struct ga_cam_s{
 	char name[STRING_LENGTH];
@@ -71,7 +69,7 @@ ga_material_t *ga_material_new_blending(char *name, float alpha, ga_material_t *
 ga_material_t *ga_material_new_comb(char *name);
 ga_material_t *ga_material_new_flat(char *name,vec_t color);
 ga_material_t *ga_material_new_emit(char *name,vec_t color);
-void	ga_material_add_comb(ga_material_t *mat, const ga_material_t *comb);
+void	ga_material_add_comb(ga_material_t *mat, ga_material_t *comb);
 void	ga_material_print(ga_material_t *m);
 
 /*------- GEOMETRY --------*/
@@ -87,7 +85,6 @@ typedef struct ga_shape_s{
 	char name[STRING_LENGTH];
 	ga_geom_t 	*geom;		/* geometry of the shape */
 	ga_material_t 	*material; 	/* material of the shape */
-	model_t *model;			/* worldspace coordinate model*/
 }ga_shape_t;
 ga_shape_t *ga_shape_new(char*name, ga_geom_t*g, ga_material_t *m);
 void	ga_shape_print(ga_shape_t*s);
@@ -127,6 +124,7 @@ typedef struct ga_scene_s{
 	ga_list_t *material;		/* material list */
 	ga_list_t *geom;		/* geometry list */
 	ga_list_t *shape;		/* shape list */
+	ga_list_t *tri_pool;		/* all the triangles in worldspace coords */
 	ga_transform_t *transform;	/* base transform */
 	ga_image_t *img;		/* output image */
 }ga_scene_t;
@@ -156,5 +154,6 @@ ga_geom_t	*ga_scene_get_geom(ga_scene_t *s, const char *name);
  * Create a new scene from sdl file in path
  */
 ga_scene_t *ga_scene_load(char *path);
+void	ga_scene_build(ga_scene_t *s);
 
 #endif

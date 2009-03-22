@@ -77,7 +77,7 @@ ga_material_t *ga_material_new_emit(char *name,vec_t color){
 	m->color = color;
 	return m;
 }
-void	ga_material_add_comb(ga_material_t *mat, const ga_material_t *comb){
+void	ga_material_add_comb(ga_material_t *mat, ga_material_t *comb){
 	ga_list_add(mat->comb,comb);
 }
 
@@ -119,6 +119,7 @@ ga_transform_t *ga_transform_identity(void){
 	t->type = GA_IDENTITY;
 	t->child = ga_list_new();
 	t->shape = ga_list_new();
+	t->matrix = mat_set_id(mat_new_zero());
 	return t;
 }
 ga_transform_t *ga_transform_translate(vec_t param){
@@ -126,8 +127,7 @@ ga_transform_t *ga_transform_translate(vec_t param){
 	strncpy(t->name,"translation",12);
 	t->type = GA_TRANSLATE;
 	t->param = param;
-	t->matrix = mat_new_zero();
-	mat_set_trans(param,t->matrix);
+	t->matrix = mat_set_trans(param,mat_new_zero());
 	return t;
 }
 ga_transform_t *ga_transform_scale(vec_t param){
@@ -135,8 +135,7 @@ ga_transform_t *ga_transform_scale(vec_t param){
 	strncpy(t->name,"scaling",8);
 	t->type = GA_SCALE;
 	t->param = param;
-	t->matrix = mat_new_zero();
-	mat_set_scale(param,t->matrix);
+	t->matrix = mat_set_scale(param,mat_new_zero());
 	return t;
 }
 ga_transform_t *ga_transform_rotate(vec_t param, float angle){
@@ -145,8 +144,7 @@ ga_transform_t *ga_transform_rotate(vec_t param, float angle){
 	t->type = GA_ROTATE;
 	t->angle = angle;
 	t->param = param;
-	t->matrix = mat_new_zero();
-	mat_set_rot(param,angle,t->matrix);/*TODO*/
+	t->matrix = mat_set_rot(param,angle,mat_new_zero());
 	return t;
 }
 void ga_transform_add_child(ga_transform_t *p, ga_transform_t *c){
@@ -202,6 +200,7 @@ ga_scene_t *ga_scene_new(char *name){
 	s->shape = ga_list_new();
 	s->geom = ga_list_new();
 	s->transform = ga_transform_identity();
+	s->tri_pool = ga_list_new();
 	return s;
 }
 void ga_scene_set_image(ga_scene_t *s, int sizex, int sizey){
@@ -274,5 +273,49 @@ void	ga_scene_print(ga_scene_t *s){
 	printf("  </Scene>\n");
 	printf("</Sdl>\n\n");
 }
+static void ga_model_build(	ga_scene_t *s, 
+				model_t *model, 
+				ga_material_t *material,
+				mat_t * trmat ){
+	int i = 0;
+	mat_t n;
+	tri_t *tri = (tri_t*)malloc(sizeof(tri_t)*model->tri_count);/*TODO free this */
+	memcpy(tri,model->tri,model->tri_count*sizeof(tri_t));
+	mat_set_norm(&n,trmat);
+	while( i < model->tri_count){
+		tri[i].material = material;
+		tri_transform(tri + i,trmat,&n);
+		ga_list_add(s->tri_pool,tri + i);
+		i++;
+	}
+}
+static void ga_graph_build(	ga_scene_t *s, 
+				const ga_transform_t *tr, 
+				const mat_t *trmat ){
+	mat_t mat;
+	ga_node_t *n = NULL;
+	ga_shape_t *shape = NULL;
+	ga_geom_t *geom = NULL;
+	mat_cpy(&mat,tr->matrix);
+	mat_mult2(trmat,&mat);
 
+	n = tr->shape->first;
+	while(n){
+		shape = (ga_shape_t*)n->data;
+		geom  = shape->geom;
+		ga_model_build(s,geom->model,shape->material,&mat);
+		n = n->next;
+	}
+	
+	n = tr->child->first;
+	while(n){
+		ga_graph_build(s,(ga_transform_t*)n->data,&mat);
+		n = n->next;
+	}
+}
+void ga_scene_build(ga_scene_t *s){
+	mat_t trmat;
+	mat_set_id(&trmat);
+	ga_graph_build(s,s->transform,&trmat);
+}
 

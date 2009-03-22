@@ -7,18 +7,29 @@
    </Cameras>   
    
    <Lights>
-      <PointLight position="-5 5 -5" intensity="1" color="1 1 1" name="light0" />
+      <PointLight position="5 8 6" intensity="1" color="1 1 1" name="light0" />
    </Lights>
    
    <Geometry>
-   	<Obj src="xml/obj/cube.obj" name="bunny" />
+   	<Obj src="xml/obj/teapot.obj" name="teapot" />
+   	<Obj src="xml/obj/sphere.obj" name="sphere" />
+   	<Obj src="xml/obj/cube.obj" name="cube" />
+   	<Obj src="xml/obj/cone.obj" name="cone" />
    </Geometry>
    
    <Materials>
-      <PhongMaterial color="0.9 0.9 0.9" shininess="50" name="dif0"/>      
+      <DiffuseMaterial color="0.9 0.9 0.0" name="dif0"/>      
+      <DiffuseMaterial color="0.9 0.0 0.9" name="dif1"/>      
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
-      <Shape geometry="bunny" material="dif0" />
+   <Shape geometry="cube" material="dif1" />
+   <Translate vector="1 0  0">
+   <Rotate vector="1 0 0" angle="75">
+   <Scale scale="0.5 1.10 0.5">
+   <Shape geometry="cube" material="dif0" />
+   </Scale>
+   </Rotate>
+   </Translate>
    </Scene>
 </Sdl>

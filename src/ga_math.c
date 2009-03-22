@@ -216,6 +216,21 @@ mat_t *mat_mult(mat_t *a, const mat_t *b){
 	mat_free(m);
 	return a;
 }
+mat_t *mat_mult2(const mat_t*a, mat_t*b){
+	int i = 4;
+	int j = 4;
+	mat_t *m = mat_new_zero();
+	while(i--){
+		j = 4;
+		while(j--){
+			M_IJ(m,i,j) = vec_wdot(	mat_get_row(i,a),
+						mat_get_col(j,b)	);
+		}
+	}
+	mat_cpy(b,m);
+	mat_free(m);
+	return b;
+}
 vec_t mat_vmult(const mat_t *a, vec_t b){
 	vec_t r;
 	int i = 4;
@@ -235,6 +250,22 @@ mat_t *mat_scale(float s, mat_t *a){
 	a->w = vec_scale(s,a->w);
 	return a;
 }
+mat_t *mat_set_norm(mat_t *n, const mat_t *m){
+	mat_set_id(n);
+	n->x.x = m->y.y*m->z.z - m->y.z*m->z.y;
+	n->y.y = m->x.x*m->z.z - m->x.z*m->z.x;
+	n->z.z = m->x.x*m->y.y - m->x.y*m->y.x;
+
+	n->x.y = m->y.z*m->z.x - m->y.x*m->z.z;
+	n->x.z = m->y.x*m->z.y - m->y.y*m->z.x;
+	n->y.z = m->x.y*m->z.x - m->x.x*m->z.y;
+
+	n->y.x = m->x.z*m->z.y - m->x.y*m->z.z;
+	n->z.x = m->x.y*m->y.z - m->x.z*m->y.y;
+	n->z.y = m->x.z*m->y.x - m->x.x*m->y.z;
+	return n;
+}
+	
 mat_t *mat_set_id(mat_t *a){
 	memset(a,0,sizeof(mat_t));
 	a->x.x = 1;

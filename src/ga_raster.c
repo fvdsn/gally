@@ -172,7 +172,7 @@ void ga_raster_render(ga_scene_t *s){
 			}
 			tri_cpy(&tri_tmp,model->tri + i);
 			/*transform triangle*/
-			tri_transform(&tri_tmp,&cam_transform);
+			tri_transform(&tri_tmp,&cam_transform,NULL);
 			/*paint the triangle*/
 			ga_raster_triangle(s->img,&tri_tmp);
 		}

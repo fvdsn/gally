@@ -279,7 +279,6 @@ static void ga_scene_graph_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *
 		}
 		a = n->properties;
 		while(a){
-			a = a->next;
 			if(!xmlStrcmp(a->name,(const xmlChar*)"axis")){
 				param = vec_parse((char*)a->children->content);
 			}else if(!xmlStrcmp(a->name,(const xmlChar*)"vector")){
@@ -291,6 +290,7 @@ static void ga_scene_graph_explore(xmlNodePtr n, ga_scene_t *s, ga_transform_t *
 			}else{
 				fprintf(stderr,"WARNING: unexpected transform attribute '%s'\n",(const char*)a->name);
 			}
+			a = a->next;
 		}
 		switch(type){
 			case GA_ROTATE: newt = ga_transform_rotate(param,angle); break;

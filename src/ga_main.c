@@ -65,6 +65,8 @@ int main(int argc, char **argv){
 	}
 	ga_scene_set_image(s,sizex,sizey);
 	if(raytrace){
+		printf("Applying scene graph transforms\n");
+		ga_scene_build(s);
 		printf("Rendering pixel collumn ...\n");
 		ga_ray_render(s);
 		printf("Done\n");

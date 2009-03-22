@@ -15,11 +15,11 @@ static tri_t tri[GA_MAX_VERT];
 static int  tri_count;
 
 tri_t *tri_print(tri_t *t){
-	printf("vert: [ %f %f %f | %f %f %f | %f %f %f ] \n",
-			t->vert[0].x,t->vert[0].y,t->vert[0].z,
-			t->vert[1].x,t->vert[1].y,t->vert[1].z,
-			t->vert[2].x,t->vert[2].y,t->vert[2].z	);
-	printf("vnorm:[ %f %f %f | %f %f %f | %f %f %f ] norm: [ %f %f %f ]\n",
+	printf("vert: [ %f %f %f %f| %f %f %f %f| %f %f %f %f] \n",
+			t->vert[0].x,t->vert[0].y,t->vert[0].z,t->vert[0].w,
+			t->vert[1].x,t->vert[1].y,t->vert[1].z,t->vert[1].w,
+			t->vert[2].x,t->vert[2].y,t->vert[2].z,t->vert[2].w	);
+	/*printf("vnorm:[ %f %f %f | %f %f %f | %f %f %f ] norm: [ %f %f %f ]\n",
 			t->vnorm[0].x,t->vnorm[0].y,t->vnorm[0].z,
 			t->vnorm[1].x,t->vnorm[1].y,t->vnorm[1].z,
 			t->vnorm[2].x,t->vnorm[2].y,t->vnorm[2].z,
@@ -27,13 +27,22 @@ tri_t *tri_print(tri_t *t){
 	printf("vtex: [ %f %f | %f %f | %f %f ]\n",
 			t->vtex[0].x,t->vtex[0].y,
 			t->vtex[1].x,t->vtex[1].y,
-			t->vtex[2].x,t->vtex[2].y	);
+			t->vtex[2].x,t->vtex[2].y	);*/
 	return t;
 }
-tri_t *tri_transform(tri_t *t, const mat_t *m){
+tri_t *tri_transform(tri_t *t, const mat_t *m,const mat_t *n){
 	int i = 3;
 	while(i--){
 		t->vert[i] = vec_point(vec_vec(mat_vmult(m,t->vert[i])));
+	}
+	t->edge[0] = vec_delta(t->vert[0],t->vert[1]);
+	t->edge[1] = vec_delta(t->vert[0],t->vert[2]);
+	if(n){
+		i = 3;
+		while(i--){
+			t->vnorm[i] = vec_norm(vec_point(vec_vec(mat_vmult(n,t->vnorm[i]))));
+		}
+		t->norm = vec_norm(vec_point(vec_vec(mat_vmult(n,t->norm))));
 	}
 	return t;
 }

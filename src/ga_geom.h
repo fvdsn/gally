@@ -12,6 +12,7 @@ typedef struct tri_s{
 	vec_t vtex[3];	/*vertex texture coordinates*/
 	vec_t vcolor[3];/*vertex colors*/
 	vec_t edge[2];	/*v0->v1 , v0->v2*/
+	void * material;
 }tri_t;
 /**
  * Prints the triangle to the console
@@ -20,7 +21,7 @@ tri_t *tri_print(tri_t *t);
 /**
  * transform the triangle with the matrix m
  */
-tri_t *tri_transform(tri_t *t, const mat_t *m);
+tri_t *tri_transform(tri_t *t, const mat_t *m, const mat_t*n);
 /**
  * copy the triangle t2 into triangle t
  */

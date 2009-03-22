@@ -133,6 +133,7 @@ mat_t *mat_add(mat_t *a,  const mat_t *b);
  * Sets a to the matrix multiplication of a and b.
  */
 mat_t *mat_mult(mat_t *a, const mat_t *b);
+mat_t *mat_mult2(const mat_t*a, mat_t*b);
 /**
  * returns the multiplication of matrix a and vector b
  */
@@ -158,6 +159,7 @@ mat_t *mat_set_2d(int nx, int ny, mat_t *a);
  * Sets the matrix a to the orthographic projection matrix
  * with lbn and rtf bounding box vectors.
  */
+mat_t *mat_set_norm(mat_t *n, const mat_t *m);
 mat_t *mat_set_ortho(vec_t lbn, vec_t rtf, mat_t *a);
 /**
  * Sets the matrix a to the custom camera position projection

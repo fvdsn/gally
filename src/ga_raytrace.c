@@ -143,53 +143,39 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
  * s
  */
 vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
-	int i = 0;
-	ga_geom_t *g;
-	ga_material_t *material;
-	ga_shape_t *shape;
-	model_t *m;
-	ga_node_t *n = s->shape->first;
+	ga_node_t *n = s->tri_pool->first;
 	int   first = 1;
+	tri_t *tri  = NULL;
 	float t = 0.0f;
 	float u = 0.0f;
 	float v = 0.0f;
+	tri_t *_tri = NULL;	
 	float _t = 0.0f;
 	float _u = 0.0f;
 	float _v = 0.0f;
 	vec_t normal;
-	tri_t *tr = NULL;	
 	vec_t pos;
 	dir = vec_norm(dir);
-	while(n){	/* we iterate over models in scene */
-		shape = (ga_shape_t*)n->data;
-		g = shape->geom;
-		m = g->model;
-		material = shape->material;
-		if(m){
-			i = m->tri_count;
-			first = 1;
-			while(i--){	/*we iterate over triangles */
-				if (ga_ray_fast_intersect(m->tri + i,&start,&dir,&_t,&_u,&_v)){
-					if( first || (!first && _t < t)){
-						t = _t;
-						u = _u;
-						v = _v;
-						tr = m->tri + i;
-						first = 0;
-					}
-
+	while(n){	/* we iterate over triangle in scene */
+		_tri = (tri_t*)n->data;
+			if (ga_ray_fast_intersect(_tri,&start,&dir,&_t,&_u,&_v)){
+				if( first || (!first && _t < t)){
+					t = _t;
+					u = _u;
+					v = _v;
+					tri = _tri;
+					first = 0;
 				}
 			}
-			if(!first){	/*we got an intersection */
-				normal = vec_add(vec_scale(u,tr->vnorm[1]),
-					 vec_add(vec_scale(v,tr->vnorm[2]),
-							vec_scale(1.0f-u-v,tr->vnorm[0])));
-				pos = vec_add(start,vec_scale(t,dir));
-				return ga_ray_shade( pos,dir,normal,material,s );
-			}
-		} 
 		n = n->next;
-	}	/*no intersection, return background color */
+	}
+	if(!first){	/*we got an intersection */
+		normal = vec_add(vec_scale(u,tri->vnorm[1]),
+			 vec_add(vec_scale(v,tri->vnorm[2]),
+				vec_scale(1.0f-u-v,tri->vnorm[0])));
+		pos = vec_add(start,vec_scale(t,dir));
+		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
+	}
 	return s->bg_color;
 }
 /* render a part of the render image to the scene output buffer.
