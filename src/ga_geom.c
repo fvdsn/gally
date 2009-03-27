@@ -238,35 +238,40 @@ void ga_tri_bound(const tri_t *tri, int axis, float *a, float *b){
 		}
 	}
 }
-static int ray_slab_intersect(float start, float dir, float min, float max,float *tfirst, float *tlast){
-	float tmin,tmax,tmp;
+/* Physically based rendering page 180 */
+static int ray_slab_intersect(float start, float dir, float min, float max, float *t0, float* t1){
+	float invdir,tnear,tfar,tmp;
 	if(fabsf(dir) < 1.0E-8){
-		return(start < max && start > min);
+		return ( start < max && start > min );
 	}
-	tmin = (min - start) / dir;
-	tmax = (max - start) / dir;
-	if (tmin > tmax) { tmp = tmin; tmin = tmax; tmax = tmp; }
-	if(tmax < *tfirst || tmin > *tlast){
+	invdir = 1.0f/dir;
+	tnear = (min - start) * invdir;
+	tfar  = (max - start) * invdir;
+	if(tnear > tfar){ tmp = tnear; tnear = tfar; tfar = tmp; }
+	*t0 = tnear > *t0 ? tnear : *t0;
+	*t1 = tfar  < *t1 ? tfar  : *t1;
+	if (*t0 > *t1){
 		return 0;
+	}else{
+		return 1;
 	}
-	if(tmin > *tfirst){ *tfirst = tmin; }
-	if(tmax > *tlast){  *tlast  = tmax; }
-	return 1;
 }
+
+
 int ga_ray_box_intersect(const vec_t *origin, const vec_t *dir, const vec_t *min, const vec_t *max, float *ta, float *tb){
-	float tfirst = -FLT_MAX;
-	float tlast =  1.0f;
-	if(!ray_slab_intersect(origin->x,dir->x,min->x,max->x,&tfirst,&tlast)){
+	float t0 = -FLT_MAX;
+	float t1 =  FLT_MAX;
+	if(!ray_slab_intersect(origin->x,dir->x,min->x,max->x,&t0,&t1)){
 		return 0;
 	}
-	if(!ray_slab_intersect(origin->y,dir->y,min->y,max->y,&tfirst,&tlast)){
+	if(!ray_slab_intersect(origin->y,dir->y,min->y,max->y,&t0,&t1)){
 		return 0;
 	}
-	if(!ray_slab_intersect(origin->z,dir->z,min->z,max->z,&tfirst,&tlast)){
+	if(!ray_slab_intersect(origin->z,dir->z,min->z,max->z,&t0,&t1)){
 		return 0;
 	}
-	*ta = tfirst;
-	*tb = tlast;
+	*ta = t0;
+	*tb = t1;
 	return 1;
 }
 #define EPSILON 0.00001f	/*tolerance from numerical errors*/

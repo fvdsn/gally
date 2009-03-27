@@ -184,13 +184,17 @@ vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	float t = 0.0f;
 	float u = 0.0f;
 	float v = 0.0f;
+	int   nnode = 0;
 	vec_t normal;
 	vec_t pos;
+	vec_t ret;
 	dir = vec_norm(dir);
 	if(ga_kdtree_ray_trace(s->kdtree, &(s->box_min), &(s->box_max), 
-			&start, &dir, &tri, &u, &v, &t)){
+			&start, &dir, &tri, &u, &v, &t,&nnode)){
 		if(!tri){
-			printf(".\n");
+			ret = vec_sub(s->bg_color,vec_new(0.01,0.01,0.01,1));
+			ret.z += nnode/255.0f;
+			return ret;
 		}else{
 		normal = vec_add(vec_scale(u,tri->vnorm[1]),
 			 vec_add(vec_scale(v,tri->vnorm[2]),
@@ -198,10 +202,18 @@ vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 		pos = vec_add(start,vec_scale(t,dir));
 		}
 		/*return vec_new(1,1,1,1);*/
-		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
+		ret = vec_add(s->bg_color,vec_new(0.01,0.01,0.01,1));
+		ret = vec_add(ret, ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s ));
+		ret.z += nnode/255.0f;
+		if(ret.z > 1.0f){
+			ret.y += (nnode-255)/255.0f;
+		}
+		return ret;
 		
 	}
-	return s->bg_color;
+	ret = s->bg_color;
+	ret.z += nnode/255.0f;
+	return ret;
 }
 /* render a part of the render image to the scene output buffer.
  * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
