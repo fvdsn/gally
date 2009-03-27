@@ -1,7 +1,9 @@
-#include "ga_geom.h"
 #include <stdlib.h>
 #include <string.h> 
 #include <stdio.h> 
+#include <math.h>
+#include <float.h>
+#include "ga_geom.h"
 
 #define LINE_LENGTH 256
 /* Buffers to store data when we load an obj file */
@@ -222,21 +224,82 @@ model_t *model_load(char *path){
 	printf("SUCCESS: Model '%s' successfully loaded\n",path);
 	return m;
 }
-/*TODO loading geometry from xml file */
-model_t *model_parse(	char *v, 
-			char* n, 
-			char* t, 
-			char* vi,
-			char* ni,
-			char* ti	);
-/*int main(int argc, char **argv){
-	model_t *m;
-	if(argc < 2){
-		printf("ERROR: no .obj file path argument given\n");
-		return 1;
-	}
-	m = model_load(argv[1]);
-	model_print(m);
-	return 0;
-}*/
 
+void ga_tri_bound(const tri_t *tri, int axis, float *a, float *b){
+	float *vert = (float*)tri->vert;
+	int i = 3;
+	*a = vert[axis];
+	*b = vert[axis];
+	while(i--){
+		if(vert[i*4+axis] < *a){
+			*a = vert[i*4+axis];
+		}else if(vert[i*4+axis] > *b){
+			*b = vert[i*4+axis];
+		}
+	}
+}
+static int ray_slab_intersect(float start, float dir, float min, float max,float *tfirst, float *tlast){
+	float tmin,tmax,tmp;
+	if(fabsf(dir) < 1.0E-8){
+		return(start < max && start > min);
+	}
+	tmin = (min - start) / dir;
+	tmax = (max - start) / dir;
+	if (tmin > tmax) { tmp = tmin; tmin = tmax; tmax = tmp; }
+	if(tmax < *tfirst || tmin > *tlast){
+		return 0;
+	}
+	if(tmin > *tfirst){ *tfirst = tmin; }
+	if(tmax > *tlast){  *tlast  = tmax; }
+	return 1;
+}
+int ga_ray_box_intersect(const vec_t *origin, const vec_t *dir, const vec_t *min, const vec_t *max, float *ta, float *tb){
+	float tfirst = -FLT_MAX;
+	float tlast =  1.0f;
+	if(!ray_slab_intersect(origin->x,dir->x,min->x,max->x,&tfirst,&tlast)){
+		return 0;
+	}
+	if(!ray_slab_intersect(origin->y,dir->y,min->y,max->y,&tfirst,&tlast)){
+		return 0;
+	}
+	if(!ray_slab_intersect(origin->z,dir->z,min->z,max->z,&tfirst,&tlast)){
+		return 0;
+	}
+	*ta = tfirst;
+	*tb = tlast;
+	return 1;
+}
+#define EPSILON 0.00001f	/*tolerance from numerical errors*/
+int   ga_ray_tri_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
+	vec_t pvec; 
+	vec_t tvec;
+	vec_t qvec;
+	float det;
+	float inv_det;
+	if(vec_fdot(dir,&(tr->norm)) > 0.0f){
+		return 0;
+	}
+	/*check if we are not parallel to view direction*/
+	vec_fcross(&pvec,dir,tr->edge +1);
+	det = vec_fdot(tr->edge,&pvec);
+	if(det < EPSILON){
+		return 0;
+	}
+	/*compute first barycentric coordinate and check it*/
+	vec_fsub(&tvec,start,tr->vert +0);
+	*u = vec_fdot(&tvec,&pvec);
+	if(*u <-EPSILON || *u >= det + EPSILON){
+		return 0;
+	}
+	/*compute second and third coordinate and check them */
+	vec_fcross(&qvec,&tvec,tr->edge);
+	*v = vec_fdot(dir,&qvec);
+	if(*v <-EPSILON || *u + *v > det + EPSILON){
+		return 0;
+	}
+	inv_det = 1.0f/det;
+	*u *= inv_det;
+	*v *= inv_det;
+	*t = vec_fdot(tr->edge+1,&qvec)*inv_det;
+	return 1;
+}

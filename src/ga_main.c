@@ -3,6 +3,7 @@
 #include<stdio.h>
 #include "ga_raytrace.h"
 #include "ga_raster.h"
+#include "ga_kdtree.h"
 
 static const char *help_text = "Mendatory arguments : \
 \n\t-scene=PATH   : the path to the sdl scene file\n\
@@ -66,7 +67,15 @@ int main(int argc, char **argv){
 	ga_scene_set_image(s,sizex,sizey);
 	if(raytrace){
 		printf("Applying scene graph transforms\n");
-		ga_scene_build(s);
+		ga_scene_build_triangle(s);
+		printf("Building Scene Bounding Box\n");
+		ga_scene_build_bounding_box(s);
+		vec_print(s->box_min);
+		vec_print(s->box_max);
+		printf("Building KD-Tree\n");
+		ga_scene_build_kdtree(s);
+		printf("Printing KD-Tree\n");
+		/*ga_kdtree_print(s->kdtree,0);*/
 		printf("Rendering pixel collumn ...\n");
 		ga_ray_render(s);
 		printf("Done\n");

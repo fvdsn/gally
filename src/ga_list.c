@@ -28,6 +28,16 @@ void	ga_list_add(ga_list_t *l, void *data){
 int	ga_list_size(ga_list_t *l){
 	return l->size;
 }
+void	ga_list_free(ga_list_t *l){
+	ga_node_t* n = l->first;
+	ga_node_t* next = l->first;
+	while(n){
+		next = n->next;
+		free(n);
+		n = next;
+	}
+	free(l);
+}
 void*	ga_list_find(ga_list_t *l, const char *name){
 	ga_node_t * n = l->first;
 	char *n_name = NULL;

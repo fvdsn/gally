@@ -3,6 +3,7 @@
 #include "ga_geom.h"
 #include "ga_list.h" 
 #include "ga_img.h"
+#include "ga_kdtree.h"
 
 #define STRING_LENGTH GA_NAME_LENGTH
 #define GA_MAX_COMB_MATERIAL 16
@@ -113,6 +114,7 @@ void ga_transform_add_child(ga_transform_t *p, ga_transform_t *c);
 void ga_transform_add_shape(ga_transform_t *p, ga_shape_t *c);
 void ga_transform_print(ga_transform_t *t);
 void ga_transform_apply(ga_transform_t *t);
+
 /*------- SCENE --------*/
 typedef struct ga_scene_s{
 	char name[STRING_LENGTH];
@@ -127,6 +129,9 @@ typedef struct ga_scene_s{
 	ga_list_t *tri_pool;		/* all the triangles in worldspace coords */
 	ga_transform_t *transform;	/* base transform */
 	ga_image_t *img;		/* output image */
+	ga_kdn_t   *kdtree;
+	vec_t box_min;
+	vec_t box_max;
 }ga_scene_t;
 ga_scene_t *ga_scene_new(char *name);
 /**
@@ -154,6 +159,8 @@ ga_geom_t	*ga_scene_get_geom(ga_scene_t *s, const char *name);
  * Create a new scene from sdl file in path
  */
 ga_scene_t *ga_scene_load(char *path);
-void	ga_scene_build(ga_scene_t *s);
+void	ga_scene_build_triangle(ga_scene_t *s);
+void	ga_scene_build_bounding_box(ga_scene_t *s);
+void	ga_scene_build_kdtree(ga_scene_t *s);
 
 #endif

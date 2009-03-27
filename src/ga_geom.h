@@ -26,6 +26,7 @@ tri_t *tri_transform(tri_t *t, const mat_t *m, const mat_t*n);
  * copy the triangle t2 into triangle t
  */
 void   tri_cpy(tri_t *t, const tri_t *t2);
+void ga_tri_bound(const tri_t *tri, int axis, float *min, float *max);
 
 typedef struct model_s{
 	int tri_count;
@@ -47,6 +48,14 @@ void 	model_free(model_t *m);
  * Prints the model to the console
  */
 void model_print(const model_t*m);
+
+int ga_ray_box_intersect(	const vec_t *origin, 
+				const vec_t *dir, 
+				const vec_t *min, 
+				const vec_t *max, float *ta, float *tb);
+int ga_ray_tri_intersect(	const tri_t *tr, 
+				const vec_t *origin, 
+				const vec_t * dir, float *t, float*u,float*v);
 
 #endif
 

@@ -62,6 +62,24 @@ vec_t vec_mult(vec_t a, vec_t b){
 	a.z *= b.z;
 	return a;
 }
+vec_t vec_div(vec_t a, vec_t b){
+	a.x /= b.x;
+	a.y /= b.y;
+	a.z /= b.z;
+	return a;
+}
+vec_t vec_min(vec_t a, vec_t b){
+	if(a.x > b.x){ a.x = b.x;}
+	if(a.y > b.y){ a.y = b.y;}
+	if(a.z > b.z){ a.z = b.z;}
+	return a;
+}
+vec_t vec_max(vec_t a, vec_t b){
+	if(a.x < b.x){ a.x = b.x;}
+	if(a.y < b.y){ a.y = b.y;}
+	if(a.z < b.z){ a.z = b.z;}
+	return a;
+}
 vec_t vec_scale(float s, vec_t a){
 	a.x *= s;
 	a.y *= s;
@@ -112,6 +130,9 @@ vec_t vec_point(vec_t a){
 	}
 	return a;
 }
+float vec_idx(vec_t a, int i){
+	return ((float*)(&a))[i];
+}
 float vec_len(vec_t a){
 	return sqrtf( a.x*a.x + a.y*a.y + a.z*a.z);
 }
@@ -145,9 +166,23 @@ inline void  vec_fscale(float f, vec_t *a){
 	a->y*=f;
 	a->z*=f;
 }
+inline void  vec_fmin(vec_t *a, const vec_t *b){
+	if(a->x > b->x){ a->x = b->x; }
+	if(a->y > b->y){ a->y = b->y; }
+	if(a->z > b->z){ a->z = b->z; }
+}
+inline void  vec_fmax(vec_t *a, const vec_t *b){
+	if(a->x < b->x){ a->x = b->x; }
+	if(a->y < b->y){ a->y = b->y; }
+	if(a->z < b->z){ a->z = b->z; }
+}
 inline float vec_fdot(const vec_t *a, const vec_t *b){
 	return a->x*b->x + a->y*b->y + a->z*b->z;
 }
+inline float vec_fidx(const vec_t *a, int i){
+	return ((float*)a)[i];
+}
+
 #define V_I(v,i)    ((float*)(&v))[i]
 #define M_IJ(m,i,j) ((float*)(m))[i*4+j]
 

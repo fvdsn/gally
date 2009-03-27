@@ -16,6 +16,7 @@ ga_list_t *ga_list_new(void);
 void	ga_list_add(ga_list_t *l, void *data);
 int	ga_list_size(ga_list_t *l);
 void*	ga_list_find(ga_list_t *l, const char *name);
+void	ga_list_free(ga_list_t *l);
 
 #endif
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 #include "ga_scene.h"
 
 ga_cam_t *ga_cam_new(char *name, vec_t pos, vec_t dir, vec_t up, float fov){
@@ -313,9 +314,33 @@ static void ga_graph_build(	ga_scene_t *s,
 		n = n->next;
 	}
 }
-void ga_scene_build(ga_scene_t *s){
+void ga_scene_build_triangle(ga_scene_t *s){
 	mat_t trmat;
 	mat_set_id(&trmat);
 	ga_graph_build(s,s->transform,&trmat);
+}
+void ga_scene_build_bounding_box(ga_scene_t *s){
+	const ga_node_t *n = s->tri_pool->first;
+	vec_t min;
+	vec_t max;
+	int axis = 3;
+	while(axis--){
+		((float*)&(s->box_min))[axis] = FLT_MAX;
+		((float*)&(s->box_max))[axis] = -FLT_MAX;
+	}
+	while(n){
+		axis = 3;
+		while(axis--){
+			ga_tri_bound((tri_t*)n->data,axis,
+					(float*)(&min) + axis,
+					(float*)(&max) + axis	);
+		}
+		vec_fmin(&(s->box_min),&min);
+		vec_fmax(&(s->box_max),&max);
+		n = n->next;
+	}
+}
+void ga_scene_build_kdtree(ga_scene_t *s){
+	s->kdtree = ga_kdtree_build_mean(s->tri_pool,10,20,0);
 }
 

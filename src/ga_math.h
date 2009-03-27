@@ -37,6 +37,9 @@ vec_t vec_cross(vec_t a, vec_t b);
  * of x,y,z
  */
 vec_t vec_mult(vec_t a, vec_t b);
+vec_t vec_div(vec_t a, vec_t b);
+vec_t vec_min(vec_t a, vec_t b);
+vec_t vec_max(vec_t a, vec_t b);
 /**
  * Multiplies x,y,z component of a by s
  */
@@ -70,6 +73,7 @@ vec_t vec_point(vec_t a);
  * Returns the norm 2 of x,y,z vector, doesn't take w into account.
  */
 float vec_len(vec_t a);
+float vec_idx(vec_t a, int i);
 /**
  * Returns the dot product of a and b, doesn't take w into account.
  */
@@ -88,6 +92,8 @@ int   vec_equal(vec_t a, vec_t b);
  * Sets d to a - b.
  */
 inline void  vec_fsub(vec_t *d, const vec_t *a, const vec_t *b);
+inline void  vec_fmin(vec_t *a, const vec_t *b);
+inline void  vec_fmax(vec_t *a, const vec_t *b);
 /**
  * Sets d to cross product of a and b
  */
@@ -104,6 +110,7 @@ inline void  vec_fnorm(vec_t *a);
  * Returns the dot product of a and b. doesn't take w into account.
  */
 inline float vec_fdot(const vec_t *a, const vec_t *b);
+inline float vec_fidx(const vec_t *a, int i);
 
 /**
  * Allocates a matrix with all components set to zero

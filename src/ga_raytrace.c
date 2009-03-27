@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
+#include "ga_kdtree.h"
 
 #define EPSILON 0.00001f	/*tolerance from numerical errors*/
 
@@ -178,6 +179,30 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	}
 	return s->bg_color;
 }
+vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
+	tri_t *tri  = NULL;
+	float t = 0.0f;
+	float u = 0.0f;
+	float v = 0.0f;
+	vec_t normal;
+	vec_t pos;
+	dir = vec_norm(dir);
+	if(ga_kdtree_ray_trace(s->kdtree, &(s->box_min), &(s->box_max), 
+			&start, &dir, &tri, &u, &v, &t)){
+		if(!tri){
+			printf(".\n");
+		}else{
+		normal = vec_add(vec_scale(u,tri->vnorm[1]),
+			 vec_add(vec_scale(v,tri->vnorm[2]),
+				vec_scale(1.0f-u-v,tri->vnorm[0])));
+		pos = vec_add(start,vec_scale(t,dir));
+		}
+		/*return vec_new(1,1,1,1);*/
+		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
+		
+	}
+	return s->bg_color;
+}
 /* render a part of the render image to the scene output buffer.
  * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
 static void *ga_ray_thread_func(void *data){
@@ -202,7 +227,7 @@ static void *ga_ray_thread_func(void *data){
 							vec_scale(1.0-fy,td->cu)))));
 			/*launch the ray and sets the result in the image */
 			ga_image_set_pixel(td->scene->img,x,y,
-					ga_ray_trace(td->scene,td->origin,dir));
+					ga_ray_kdtree_trace(td->scene,td->origin,dir));
 			y++;
 		}
 		x++;
