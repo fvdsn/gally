@@ -92,17 +92,19 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 			light = (ga_light_t*)n->data;
 			ldir = vec_norm(vec_sub(light->pos,pos));
 			len = vec_len(vec_sub(light->pos,pos)) + 0.001;
-			len *= len;
-			len = 1.0/len;
-			lcolor = vec_scale(len*light->color.w,light->color);
-			ga_material_shade(	&color,
-							&pos,
-							&dir,
-							&norm,
-							&ldir,
-							&(lcolor),
-							&uv,
-							mat);
+			if(!ga_ray_length(s,vec_add(pos,vec_scale(0.01,ldir)),ldir)){
+				len *= len;
+				len = 1.0/len;
+				lcolor = vec_scale(len*light->color.w,light->color);
+				ga_material_shade(	&color,
+								&pos,
+								&dir,
+								&norm,
+								&ldir,
+								&(lcolor),
+								&uv,
+								mat);
+				}
 			n = n->next;
 		}
 		return color;
