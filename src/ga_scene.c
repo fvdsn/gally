@@ -341,6 +341,6 @@ void ga_scene_build_bounding_box(ga_scene_t *s){
 	}
 }
 void ga_scene_build_kdtree(ga_scene_t *s){
-	s->kdtree = ga_kdtree_build_mean(s->tri_pool,10,20,0);
+	s->kdtree = ga_kdtree_build_octree(s->tri_pool,10,20,0,s->box_min,s->box_max);
 }
 

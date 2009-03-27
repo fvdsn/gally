@@ -69,7 +69,51 @@ ga_kdn_t *ga_kdtree_build_mean(ga_list_t*tri_list, int max_tri, int max_depth, i
 	return kdn;
 }
 ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list, int max_tri, int max_depth, int axis, vec_t min, vec_t max){
-	return NULL;
+	ga_kdn_t *kdn = ga_kdn_new();
+	ga_list_t *l0 = ga_list_new();
+	ga_list_t *l1 = ga_list_new();
+	ga_node_t *n  = NULL;
+	vec_t tmp;
+	float low,up;
+	kdn->split = (vec_idx(min,axis) + vec_idx(max,axis))/2.0f;
+	kdn->flags  = GA_KDN_NODE;
+	kdn->axis   = axis;
+
+	n = tri_list->first;
+	while(n){
+		ga_tri_bound((tri_t*)n->data,axis,&low,&up);
+		if(low < kdn->split){
+			ga_list_add(l0,n->data);
+		}
+		if(up > kdn->split){
+			ga_list_add(l1,n->data);
+		}
+		n = n->next;
+	}
+	if(max_depth <= 0){
+		kdn->p0 = ga_kdn_new_leaf(l0);
+		kdn->p1 = ga_kdn_new_leaf(l1);
+	}else{
+		if(l0->size <= max_tri){
+			kdn->p0 = ga_kdn_new_leaf(l0);
+		}else{
+			tmp = max;
+			((float*)(&tmp))[axis] = kdn->split;
+			kdn->p0 = ga_kdtree_build_octree(l0,max_tri,max_depth-1, (axis+1)%3,
+					min, tmp );
+			ga_list_free(l0);
+		}
+		if(l1->size <= max_tri){
+			kdn->p1 = ga_kdn_new_leaf(l1);
+		}else{
+			tmp = min;
+			((float*)(&tmp))[axis] = kdn->split;
+			kdn->p1 = ga_kdtree_build_octree(l1,max_tri,max_depth-1,(axis+1)%3,
+					tmp,max);
+			ga_list_free(l1);
+		}
+	}
+	return kdn;
 }
 inline static void pl(int level){
 	while(level--){	printf(" "); }
@@ -78,10 +122,16 @@ void ga_kdtree_print(ga_kdn_t *kdn,int level){
 	if(!kdn){  printf("NULL\n"); return; }
 	
 	if(kdn->flags == GA_KDN_LEAF){
-		pl(level); printf("leaf:%d tris\n",
-				ga_list_size( (ga_list_t*)kdn->p0 ) 	);
+		pl(level);
+		printf("leaf: %d\n",ga_list_size( (ga_list_t*)kdn->p0 ) );
 	}else{
-		pl(level); printf("kdn->split: %f\n",kdn->split);
+		pl(level);
+		switch(kdn->axis){
+			case 0:printf("X");break;
+			case 1:printf("Y");break;
+			case 2:printf("Z");break;
+		}
+		printf(" : %f\n",kdn->split);
 		ga_kdtree_print((ga_kdn_t*)kdn->p0,level+1);
 		ga_kdtree_print((ga_kdn_t*)kdn->p1,level+1);
 	}

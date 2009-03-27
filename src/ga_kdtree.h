@@ -28,6 +28,12 @@ ga_kdn_t *ga_kdtree_build_mean(ga_list_t *tri_list,
 				int max_tri, 
 				int max_depth, 
 				int axis);
+ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list, 
+				int max_tri, 
+				int max_depth, 
+				int axis, 
+				vec_t min, 
+				vec_t max);
 void ga_kdtree_print(ga_kdn_t* kdn, int level);
 int ga_kdtree_ray_trace(const ga_kdn_t *root, 
 			const vec_t *box_min, 

@@ -30,13 +30,14 @@
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
-   <Shape geometry="teapot" material="dif1" />
-   <!--<Translate vector="1 0  0">
+   <Scale scale="0.4 0.4 0.4"><Shape geometry="triceratops" material="dif1" /></Scale>
+   <Scale scale="0.2 0.6 0.2"><Shape geometry="triceratops" material="dif0" /></Scale>
+   <Translate vector="1 0  0">
    <Rotate vector="1 0 0" angle="75">
    <Scale scale="0.3 0.5 0.3">
    <Shape geometry="triceratops" material="mat0" />
    </Scale>
    </Rotate>
-   </Translate>-->
+   </Translate>
    </Scene>
 </Sdl>

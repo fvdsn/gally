@@ -233,7 +233,8 @@ void ga_tri_bound(const tri_t *tri, int axis, float *a, float *b){
 	while(i--){
 		if(vert[i*4+axis] < *a){
 			*a = vert[i*4+axis];
-		}else if(vert[i*4+axis] > *b){
+		}
+		if(vert[i*4+axis] > *b){
 			*b = vert[i*4+axis];
 		}
 	}
