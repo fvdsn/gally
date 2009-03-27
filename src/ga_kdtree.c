@@ -149,7 +149,7 @@ int ga_kdtree_ray_trace(const ga_kdn_t *root,
 			const vec_t *origin, 
 			const vec_t *dir, 
 			tri_t **ret_tri, float *u, float *v, float *dist,
-			int *nnode){
+			int *nnode,float *ab){
 	stack_elem_t stack[GA_MAX_REC_DEPTH];
 	ga_kdn_t nowhere, *far_child;
 	const ga_kdn_t *curr_node = root;
@@ -165,6 +165,7 @@ int ga_kdtree_ray_trace(const ga_kdn_t *root,
 		*ret_tri = NULL;
 		return 1;
 	}
+	*ab = b-a;
 	stack[enpt].t = a;
 	if(a >= 0.0){
 		stack[enpt].pb = vec_add(*origin,
@@ -178,11 +179,11 @@ int ga_kdtree_ray_trace(const ga_kdn_t *root,
 	while(curr_node != &nowhere){
 		_nnode++;
 		while(curr_node->flags != GA_KDN_LEAF){
-			_nnode++;
 			float split = curr_node->split;
 			int   axis  = curr_node->axis;
 			int   naxis = (axis+1) %3;
 			int   paxis = (axis-1) %3; 
+			_nnode++;
 			if(STACK_PB(enpt,axis) <= split){
 				if(STACK_PB(expt,axis) <= split){
 					curr_node = (ga_kdn_t*)curr_node->p0;
@@ -216,31 +217,26 @@ int ga_kdtree_ray_trace(const ga_kdn_t *root,
 						t * vec_fidx(dir,paxis);
 		}
 		/*current node is a leaf*/
-		if(curr_node->p0){
-			float _u=0.0f,_v = 0.0f,_dist =0.0f;
-			int  intersect = 0;
-			
-			n = ((ga_list_t*)curr_node->p0)->first;
-			while(n){
-				if(ga_ray_tri_intersect((tri_t*)n->data,
-						origin,dir,&_dist,&_u,&_v)){
-					if(!intersect || 
-					 	(intersect && _dist < *dist)){
-						intersect = 1;
-						*ret_tri = (tri_t*)n->data;
-						*u = _u;
-						*v = _v;
-						*dist = _dist;
-					}
+		float _u=0.0f,_v = 0.0f,_dist =0.0f;
+		int  intersect = 0;	
+		n = ((ga_list_t*)curr_node->p0)->first;
+		while(n){
+			if(ga_ray_tri_intersect((tri_t*)n->data,
+					origin,dir,&_dist,&_u,&_v)){
+				if(!intersect || 
+					(intersect && _dist < *dist)){
+					intersect = 1;
+					*ret_tri = (tri_t*)n->data;
+					*u = _u;
+					*v = _v;
+					*dist = _dist;
 				}
-				n = n->next;
 			}
-			if(intersect){
-				*nnode = _nnode;
-				return 1;
-			}
-		}else{
-			printf("yo\n");
+			n = n->next;
+		}
+		if(intersect){
+			*nnode = _nnode;
+			return 1;
 		}
 		/* if no intersection */
 		enpt = expt;
@@ -250,7 +246,83 @@ int ga_kdtree_ray_trace(const ga_kdn_t *root,
 	*nnode = _nnode;
 	return 0;
 }
-
+int ga_kdtree_ray_rec(const ga_kdn_t *root, 
+			vec_t box_min, 
+			vec_t box_max, 
+			const vec_t *origin, 
+			const vec_t *dir,
+			tri_t **tri, float *u, float *v, float *t){
+	float _a,_b,p0_a,p0_b,p0_int,p1_a,p1_b,p1_int,_u,_v,_t;
+	int   hit;
+	vec_t p0_max,p1_min;
+	if(!ga_ray_box_intersect(origin,dir,&box_min,&box_max,&_a,&_b)){
+		return 0;
+	}
+	if(root->flags == GA_KDN_LEAF){
+		ga_node_t *n = ((ga_list_t*)root->p0)->first;
+		hit = 0;
+		while(n){
+			if(ga_ray_tri_intersect((tri_t*)n->data,origin,dir,
+						&_t,&_u,&_v)
+					&& (_t >= _a) && (_t <= _b)){
+				if(!hit || (hit && _t < *t)){
+					hit = 1;
+					*t = _t;
+					*u = _u;
+					*v = _v;
+					*tri = (tri_t*)n->data;
+				}
+			}
+			n = n->next;
+		}
+		return hit;
+	}else{
+		p0_max = box_max;
+		p1_min = box_min;
+		((float*)&p0_max)[(int)root->axis] = root->split;
+		((float*)&p1_min)[(int)root->axis] = root->split;
+		p0_int =ga_ray_box_intersect(origin,dir,&box_min,&p0_max,&p0_a,&p0_b);
+		p1_int =ga_ray_box_intersect(origin,dir,&p1_min,&box_max,&p1_a,&p1_b);
+		if(p0_int && p1_int){
+			if(p0_a < p1_a){
+				if(ga_kdtree_ray_rec( (ga_kdn_t*)root->p0,box_min,
+							p0_max,	origin,	dir,
+							tri,u,v,t)){ 
+					return 1; 
+				}else if(ga_kdtree_ray_rec( (ga_kdn_t*)root->p1,p1_min,
+							box_max,origin, dir,
+							tri,u,v,t)){ 
+					return 1; 
+				}else{
+					return 0;
+				}
+			}else{
+				if(ga_kdtree_ray_rec( (ga_kdn_t*)root->p1,p1_min,
+							box_max,origin, dir,
+							tri,u,v,t)){ 
+					return 1; 
+				}else if(ga_kdtree_ray_rec( (ga_kdn_t*)root->p0,box_min,
+							p0_max,	origin,	dir,
+							tri,u,v,t)){ 
+					return 1; 
+				}else{
+					return 0;
+				}
+			}
+		}else if(p0_int){
+			return ga_kdtree_ray_rec( (ga_kdn_t*)root->p0,box_min,
+							p0_max,	origin,	dir,
+							tri,u,v,t);
+		}else if(p1_int){
+			return ga_kdtree_ray_rec( (ga_kdn_t*)root->p1,p1_min,
+							box_max,origin, dir,
+							tri,u,v,t);
+		}else{
+			printf("shouldn happen\n");
+			return 0;
+		}
+	}
+}
 
 	
 

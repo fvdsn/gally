@@ -20,7 +20,7 @@
    </Geometry>
    
    <Materials>
-      <DiffuseMaterial color="0.9 0.9 0.0" name="dif0"/>      
+      <DiffuseMaterial color="0.5 0.5 0.3" name="dif0"/>      
       <DiffuseMaterial color="0.9 0.0 0.9" name="dif1"/>      
       <PhongMaterial color="0.5 0.5 0.5" shininess="10" name="phong0" />
       <LinearCombinedMaterial
@@ -30,8 +30,7 @@
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
-   <Scale scale="0.4 0.4 0.4"><Shape geometry="triceratops" material="dif1" /></Scale>
-   <Scale scale="0.2 0.6 0.2"><Shape geometry="triceratops" material="dif0" /></Scale>
+   <Scale scale="0.5 0.5 0.5"><Shape geometry="triceratops" material="dif1" /></Scale>
    <Translate vector="1 0  0">
    <Rotate vector="1 0 0" angle="75">
    <Scale scale="0.3 0.5 0.3">

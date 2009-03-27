@@ -184,13 +184,15 @@ vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	float t = 0.0f;
 	float u = 0.0f;
 	float v = 0.0f;
+	float ab = 0.0f;
 	int   nnode = 0;
 	vec_t normal;
 	vec_t pos;
 	vec_t ret;
 	dir = vec_norm(dir);
+	/*
 	if(ga_kdtree_ray_trace(s->kdtree, &(s->box_min), &(s->box_max), 
-			&start, &dir, &tri, &u, &v, &t,&nnode)){
+			&start, &dir, &tri, &u, &v, &t,&nnode,&ab)){
 		if(!tri){
 			ret = vec_sub(s->bg_color,vec_new(0.01,0.01,0.01,1));
 			ret.z += nnode/255.0f;
@@ -201,17 +203,27 @@ vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 				vec_scale(1.0f-u-v,tri->vnorm[0])));
 		pos = vec_add(start,vec_scale(t,dir));
 		}
-		/*return vec_new(1,1,1,1);*/
+		/return vec_new(1,1,1,1);/
 		ret = vec_add(s->bg_color,vec_new(0.01,0.01,0.01,1));
 		ret = vec_add(ret, ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s ));
 		ret.z += nnode/255.0f;
+		ret.x += ab*0.05;
 		if(ret.z > 1.0f){
 			ret.y += (nnode-255)/255.0f;
 		}
 		return ret;
 		
+	}*/
+	if(ga_kdtree_ray_rec(s->kdtree,s->box_min,s->box_max,&start,&dir,
+				&tri,&u,&v,&t)){
+		normal = vec_add(vec_scale(u,tri->vnorm[1]),
+			 vec_add(vec_scale(v,tri->vnorm[2]),
+				vec_scale(1.0f-u-v,tri->vnorm[0])));
+		pos = vec_add(start,vec_scale(t,dir));
+		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
 	}
 	ret = s->bg_color;
+	ret.x += ab*0.05;
 	ret.z += nnode/255.0f;
 	return ret;
 }
