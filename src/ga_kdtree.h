@@ -24,10 +24,6 @@ typedef struct ga_kdn_s{
 }ga_kdn_t;
 
 
-ga_kdn_t *ga_kdtree_build_mean(ga_list_t *tri_list, 
-				int max_tri, 
-				int max_depth, 
-				int axis);
 ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list, 
 				int max_tri, 
 				int max_depth, 

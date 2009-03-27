@@ -20,54 +20,6 @@ static ga_kdn_t *ga_kdn_new_leaf(ga_list_t*l){
 static void ga_kdn_free(ga_kdn_t*kdn){
 	free(kdn);
 }
-ga_kdn_t *ga_kdtree_build_mean(ga_list_t*tri_list, int max_tri, int max_depth, int axis){
-	float bound_low, bound_up;
-	ga_node_t *n  	= tri_list->first;
-	tri_t *tri 	= (tri_t*)n->data;
-	ga_list_t *up 	= ga_list_new();
-	ga_list_t *low 	= ga_list_new();
-	ga_kdn_t  *kdn 	= ga_kdn_new();
-	float inv_size = 1.0f/tri_list->size;
-	kdn->axis  = (char)axis;
-	kdn->flags = GA_KDN_NODE;
-
-	/*finding limit*/
-	kdn->split = 0.0f;
-	while(n){
-		tri = (tri_t*)n->data;
-		ga_tri_bound(tri,axis,&bound_low,&bound_up);
-		kdn->split += bound_low * inv_size;
-		n = n->next; 
-	}
-	n = tri_list->first;
-
-	while(n){	/*sorting triangles into list*/
-		tri = (tri_t*)n->data;
-		ga_tri_bound(tri,axis,&bound_low,&bound_up);
-		if(bound_low <= kdn->split){
-			ga_list_add(low,tri);
-		}
-		if(bound_up >= kdn->split){
-			ga_list_add(up,tri);
-		}
-		n = n->next;
-	}
-	/* first recursive call*/
-	if(ga_list_size(low) <= max_tri || max_depth <= 0){
-		kdn->p0 = ga_kdn_new_leaf(low);
-	}else{
-		kdn->p0 = ga_kdtree_build_mean(low,max_tri,max_depth -1,(axis+1)%GA_AXIS_COUNT);
-		ga_list_free(low);
-	}
-	/* second recursive call */
-	if(ga_list_size(up) <= max_tri || max_depth <= 0){
-		kdn->p1 = ga_kdn_new_leaf(up);
-	}else{
-		kdn->p1 = ga_kdtree_build_mean(up,max_tri,max_depth -1,(axis+1)%GA_AXIS_COUNT);
-		ga_list_free(up);
-	}
-	return kdn;
-}
 ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list, int max_tri, int max_depth, int axis, vec_t min, vec_t max){
 	ga_kdn_t *kdn = ga_kdn_new();
 	ga_list_t *l0 = ga_list_new();
@@ -195,7 +147,7 @@ int ga_kdtree_ray_trace(	ga_kdn_t *root,
 			float split = KDN_SPLIT(curr_node);
 			int   axis  = KDN_AXIS(curr_node);
 			if(stack_get_pb_axis(stack + enpt, axis) <= split){
-				if(stack_get_pb_axis(stack + expt, axis) <=split){
+				if(stack_get_pb_axis(stack + expt, axis) <= split){
 					curr_node = KDN_LEFT(curr_node);
 					continue;
 				}
