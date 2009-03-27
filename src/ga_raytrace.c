@@ -144,42 +144,6 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
  * s
  */
 vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
-	ga_node_t *n = s->tri_pool->first;
-	int   first = 1;
-	tri_t *tri  = NULL;
-	float t = 0.0f;
-	float u = 0.0f;
-	float v = 0.0f;
-	tri_t *_tri = NULL;	
-	float _t = 0.0f;
-	float _u = 0.0f;
-	float _v = 0.0f;
-	vec_t normal;
-	vec_t pos;
-	dir = vec_norm(dir);
-	while(n){	/* we iterate over triangle in scene */
-		_tri = (tri_t*)n->data;
-			if (ga_ray_fast_intersect(_tri,&start,&dir,&_t,&_u,&_v)){
-				if( first || (!first && _t < t)){
-					t = _t;
-					u = _u;
-					v = _v;
-					tri = _tri;
-					first = 0;
-				}
-			}
-		n = n->next;
-	}
-	if(!first){	/*we got an intersection */
-		normal = vec_add(vec_scale(u,tri->vnorm[1]),
-			 vec_add(vec_scale(v,tri->vnorm[2]),
-				vec_scale(1.0f-u-v,tri->vnorm[0])));
-		pos = vec_add(start,vec_scale(t,dir));
-		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
-	}
-	return s->bg_color;
-}
-vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	tri_t *tri  = NULL;
 	float t = 0.0f;
 	float u = 0.0f;
@@ -190,31 +154,7 @@ vec_t ga_ray_kdtree_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	vec_t pos;
 	vec_t ret;
 	dir = vec_norm(dir);
-	/*
-	if(ga_kdtree_ray_trace(s->kdtree, &(s->box_min), &(s->box_max), 
-			&start, &dir, &tri, &u, &v, &t,&nnode,&ab)){
-		if(!tri){
-			ret = vec_sub(s->bg_color,vec_new(0.01,0.01,0.01,1));
-			ret.z += nnode/255.0f;
-			return ret;
-		}else{
-		normal = vec_add(vec_scale(u,tri->vnorm[1]),
-			 vec_add(vec_scale(v,tri->vnorm[2]),
-				vec_scale(1.0f-u-v,tri->vnorm[0])));
-		pos = vec_add(start,vec_scale(t,dir));
-		}
-		/return vec_new(1,1,1,1);/
-		ret = vec_add(s->bg_color,vec_new(0.01,0.01,0.01,1));
-		ret = vec_add(ret, ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s ));
-		ret.z += nnode/255.0f;
-		ret.x += ab*0.05;
-		if(ret.z > 1.0f){
-			ret.y += (nnode-255)/255.0f;
-		}
-		return ret;
-		
-	}*/
-	if(ga_kdtree_ray_rec(s->kdtree,s->box_min,s->box_max,&start,&dir,
+	if(ga_kdtree_ray_trace(s->kdtree,&(s->box_min),&(s->box_max),&start,&dir,
 				&tri,&u,&v,&t)){
 		normal = vec_add(vec_scale(u,tri->vnorm[1]),
 			 vec_add(vec_scale(v,tri->vnorm[2]),
@@ -251,7 +191,7 @@ static void *ga_ray_thread_func(void *data){
 							vec_scale(1.0-fy,td->cu)))));
 			/*launch the ray and sets the result in the image */
 			ga_image_set_pixel(td->scene->img,x,y,
-					ga_ray_kdtree_trace(td->scene,td->origin,dir));
+					ga_ray_trace(td->scene,td->origin,dir));
 			y++;
 		}
 		x++;

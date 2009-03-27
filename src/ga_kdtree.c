@@ -137,115 +137,6 @@ void ga_kdtree_print(ga_kdn_t *kdn,int level){
 	}
 }	
 
-typedef struct stack_elem_s{
-	ga_kdn_t *node;	/*pointer to far child*/
-	float t;	/*entry/exit signed distance*/
-	vec_t pb;	/*entry/exit point*/
-	int   prev;	/*pointer to previous stack element*/
-}stack_elem_t;
-int ga_kdtree_ray_trace(const ga_kdn_t *root, 
-			const vec_t *box_min, 
-			const vec_t *box_max, 
-			const vec_t *origin, 
-			const vec_t *dir, 
-			tri_t **ret_tri, float *u, float *v, float *dist,
-			int *nnode,float *ab){
-	stack_elem_t stack[GA_MAX_REC_DEPTH];
-	ga_kdn_t nowhere, *far_child;
-	const ga_kdn_t *curr_node = root;
-	ga_node_t *n;
-	int enpt = 0;
-	int expt = 1;
-	int _nnode = 0;
-	int tmp;
-	float a,b; /*entry/exit signed distance*/
-	float t;   /*signed distance to the splitting plane*/
-	#define STACK_PB(pt,axis) ((float*)(&(stack[pt].pb)))[axis]
-	if(!ga_ray_box_intersect(origin,dir,box_min,box_max,&a,&b)){
-		*ret_tri = NULL;
-		return 1;
-	}
-	*ab = b-a;
-	stack[enpt].t = a;
-	if(a >= 0.0){
-		stack[enpt].pb = vec_add(*origin,
-					vec_scale(a,*dir));
-	}else{
-		stack[enpt].pb = *origin;
-	}
-	stack[expt].t = b;
-	stack[expt].pb = vec_add(*origin,vec_scale(b,*dir));
-	stack[expt].node = &nowhere;
-	while(curr_node != &nowhere){
-		_nnode++;
-		while(curr_node->flags != GA_KDN_LEAF){
-			float split = curr_node->split;
-			int   axis  = curr_node->axis;
-			int   naxis = (axis+1) %3;
-			int   paxis = (axis-1) %3; 
-			_nnode++;
-			if(STACK_PB(enpt,axis) <= split){
-				if(STACK_PB(expt,axis) <= split){
-					curr_node = (ga_kdn_t*)curr_node->p0;
-					continue;
-				}
-				if(STACK_PB(expt,axis) == split){
-					curr_node = (ga_kdn_t*)curr_node->p1;
-					continue;
-				}
-				far_child = (ga_kdn_t*)curr_node->p1;
-				curr_node = (ga_kdn_t*)curr_node->p0;
-			}else{
-				if(split < STACK_PB(expt,axis)){
-					curr_node = (ga_kdn_t*)curr_node->p1;
-					continue;
-				}
-				far_child = (ga_kdn_t*)curr_node->p0;
-				curr_node = (ga_kdn_t*)curr_node->p1;
-			}
-			t = (split - vec_fidx(origin,axis)) / vec_fidx(dir,axis);
-			tmp = expt;
-			expt++;
-			if(expt == enpt){ expt++;}
-			stack[expt].prev = tmp;
-			stack[expt].t = t;
-			stack[expt].node = far_child;
-			STACK_PB(expt,axis)  = split;
-			STACK_PB(expt,naxis) = vec_fidx(origin,naxis) +
-						t * vec_fidx(dir,naxis);
-			STACK_PB(expt,paxis) = vec_fidx(origin,paxis) + 
-						t * vec_fidx(dir,paxis);
-		}
-		/*current node is a leaf*/
-		float _u=0.0f,_v = 0.0f,_dist =0.0f;
-		int  intersect = 0;	
-		n = ((ga_list_t*)curr_node->p0)->first;
-		while(n){
-			if(ga_ray_tri_intersect((tri_t*)n->data,
-					origin,dir,&_dist,&_u,&_v)){
-				if(!intersect || 
-					(intersect && _dist < *dist)){
-					intersect = 1;
-					*ret_tri = (tri_t*)n->data;
-					*u = _u;
-					*v = _v;
-					*dist = _dist;
-				}
-			}
-			n = n->next;
-		}
-		if(intersect){
-			*nnode = _nnode;
-			return 1;
-		}
-		/* if no intersection */
-		enpt = expt;
-		curr_node = stack[expt].node;
-		expt = stack[enpt].prev;
-	}
-	*nnode = _nnode;
-	return 0;
-}
 int ga_kdtree_ray_rec(const ga_kdn_t *root, 
 			vec_t box_min, 
 			vec_t box_max, 
@@ -323,6 +214,124 @@ int ga_kdtree_ray_rec(const ga_kdn_t *root,
 		}
 	}
 }
+inline static ga_node_t *kdn_list_node(ga_kdn_t*kdn){
+	return ((ga_list_t*)(kdn->p0))->first;
+}
+typedef struct stack_elem_s{
+	ga_kdn_t *node;	/*pointer to far child*/
+	float t;	/*entry/exit signed distance*/
+	vec_t pb;	/*entry/exit point*/
+	int   prev;	/*pointer to previous stack element*/
+}stack_elem_t;
+#define KDN_LEFT(kdn) (ga_kdn_t*)((kdn)->p0)
+#define KDN_RIGHT(kdn) (ga_kdn_t*)((kdn)->p1)
+#define KDN_IS_LEAF(kdn) ((kdn)->flags == GA_KDN_LEAF)
+#define KDN_AXIS(kdn)	(int)((kdn)->axis)
+#define KDN_SPLIT(kdn)  (kdn)->split
+#define NAXIS(axis) ((axis)+1)%3
+#define PAXIS(axis) ((axis)+2)%3
+inline static void stack_set_pb_axis(stack_elem_t *se, int axis, float val){
+	float *vec = (float*)(&(se->pb));
+	vec[axis] = val;
+}
+inline static float stack_get_pb_axis(stack_elem_t *se, int axis){
+	return ((float*)(&(se->pb)))[axis];
+}
+int ga_kdtree_ray_trace(	ga_kdn_t *root,
+			const vec_t *box_min,
+			const vec_t *box_max,
+			const vec_t *origin,
+			const vec_t *dir,
+			tri_t **tri, float *u, float *v, float *dist){
+	float a,b;
+	float t;
+
+	if(!ga_ray_box_intersect(origin,dir,box_min,box_max,&a,&b)){
+		return 0;
+	}
+
+	stack_elem_t stack[GA_MAX_REC_DEPTH];
+	memset(&stack,0,GA_MAX_REC_DEPTH*sizeof(stack_elem_t));
+
+	ga_kdn_t *far_child, *curr_node;
+	curr_node = root;
+
+	int enpt = 0;
+	stack[enpt].t = a;
+	if(a >= 0.0){
+		stack[enpt].pb = vec_add(*origin,vec_scale(a,*dir));
+	}else{
+		stack[enpt].pb = *origin;
+	}
+	int expt = 1;
+	stack[expt].t = b;
+	stack[expt].pb = vec_add(*origin,vec_scale(b,*dir));
+	stack[expt].node = NULL;
+
+	while(curr_node != NULL){
+		while(!KDN_IS_LEAF(curr_node)){
+			float split = KDN_SPLIT(curr_node);
+			int   axis  = KDN_AXIS(curr_node);
+			if(stack_get_pb_axis(stack + enpt, axis) <= split){
+				if(stack_get_pb_axis(stack + expt, axis) <=split){
+					curr_node = KDN_LEFT(curr_node);
+					continue;
+				}
+				if(stack_get_pb_axis(stack + expt, axis) == split){
+					curr_node = KDN_RIGHT(curr_node);
+				}
+				curr_node = KDN_LEFT(curr_node);
+				far_child = KDN_RIGHT(curr_node);
+			}else{
+				if(stack_get_pb_axis(stack + expt, axis) > split){
+					curr_node = KDN_RIGHT(curr_node);
+					continue;
+				}
+				far_child = KDN_LEFT(curr_node);
+				curr_node = KDN_RIGHT(curr_node);
+			}
+			t = (split - vec_idx(*origin,axis)) / vec_idx(*dir,axis);
+			int tmp = expt;
+			if(++expt == enpt){ expt++; }
+			stack[expt].prev = tmp;
+			stack[expt].t = t;
+			stack[expt].node = far_child;
+			stack_set_pb_axis(stack + expt,axis,split);
+			int naxis = NAXIS(axis);
+			int paxis = PAXIS(axis);
+			stack_set_pb_axis(stack + expt, naxis,
+				vec_idx(*origin,naxis) + t*vec_idx(*dir,naxis));
+			stack_set_pb_axis(stack + expt, paxis,
+				vec_idx(*origin,paxis) + t*vec_idx(*dir,paxis));
+		}
+		ga_node_t *n = kdn_list_node(curr_node);
+		float _dist,_u,_v;
+		int hit = 0;
+		while(n){
+			if(ga_ray_tri_intersect((tri_t*)n->data,origin,dir,
+						&_dist,&_u,&_v) 
+					&& _dist > stack[enpt].t
+					&& _dist < stack[expt].t ){
+				if(!hit || (hit && _dist < *dist)){
+					hit = 1;
+					*dist = _dist;
+					*u = _u;
+					*v = _v;
+					*tri = (tri_t*)n->data;
+				}
+			}
+			n = n->next;
+		}
+		if(hit){ return 1; }
+		enpt = expt;
+		curr_node = stack[expt].node;
+		expt = stack[enpt].prev;
+	}
+	return 0;
+}
+
+
+
 
 	
 

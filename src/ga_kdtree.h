@@ -35,19 +35,18 @@ ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list,
 				vec_t min, 
 				vec_t max);
 void ga_kdtree_print(ga_kdn_t* kdn, int level);
-int ga_kdtree_ray_trace(const ga_kdn_t *root, 
-			const vec_t *box_min, 
-			const vec_t *box_max, 
-			const vec_t *origin, 
-			const vec_t *dir, 
-			tri_t **tri, float *u, float *v, float *dist,
-			int *nnode,float *ab);
 int ga_kdtree_ray_rec(const ga_kdn_t *root, 
 			vec_t box_min, 
 			vec_t box_max, 
 			const vec_t *origin, 
 			const vec_t *dir,
 			tri_t **tri, float *u, float *v, float *t);
+int ga_kdtree_ray_trace(	ga_kdn_t *root,
+			const vec_t *box_min,
+			const vec_t *box_max,
+			const vec_t *origin,
+			const vec_t *dir,
+			tri_t **tri, float *u, float *v, float *dist);
 
 #endif
 
