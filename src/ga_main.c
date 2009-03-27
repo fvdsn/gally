@@ -43,7 +43,7 @@ int main(int argc, char **argv){
 			sizey = (int)strtol(argv[i]+4,NULL,10);
 			if(sizey <= 0){
 				fprintf(stderr,"WARNING: invalid y size:%d, set to default (256)\n",sizey);
-				sizex = 256;
+				sizey = 256;
 			}
 		}else if(!strncmp(argv[i],"-h",2)){
 			printf("%s",help_text);

@@ -1,56 +1,22 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 #include <pthread.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
 #include "ga_kdtree.h"
-
-#define EPSILON 0.00001f	/*tolerance from numerical errors*/
-
-/**
- * return 1 if the ray intersects the triangle, and the normal is facing the
- * ray. if it is intersecting, t is updated to the distance from start to the
- * triangle. u and v are set to barycentric coordinates.
- *
- * Code is implemented from a paper by Tomas Moller and Ben Trumbore.
- * Some adaptations have been made : First the edge vectors are precomputed,
- * an early check with the normal is also done. since the computation are
- * done with floats, some tolerance for rounding errors has been introduced. 
- *
- */
-static int   ga_ray_fast_intersect(const tri_t *tr, const vec_t *start, const vec_t * dir, float *t, float*u,float*v){
-	vec_t pvec; 
-	vec_t tvec;
-	vec_t qvec;
-	float det;
-	float inv_det;
-	if(vec_fdot(dir,&(tr->norm)) > 0.0f){
+static  int ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
+	float u = 0.0f;
+	float v = 0.0f;
+	float t = 0.0;
+	tri_t *tri = NULL;
+	if( ga_kdtree_ray_trace(s->kdtree,&(s->box_min),&(s->box_max),
+			&origin,&dir,&tri,&u,&v,&t) ){
+		return 1;
+	}else{
 		return 0;
 	}
-	/*check if we are not parallel to view direction*/
-	vec_fcross(&pvec,dir,tr->edge +1);
-	det = vec_fdot(tr->edge,&pvec);
-	if(det < EPSILON){
-		return 0;
-	}
-	/*compute first barycentric coordinate and check it*/
-	vec_fsub(&tvec,start,tr->vert +0);
-	*u = vec_fdot(&tvec,&pvec);
-	if(*u <-EPSILON || *u >= det + EPSILON){
-		return 0;
-	}
-	/*compute second and third coordinate and check them */
-	vec_fcross(&qvec,&tvec,tr->edge);
-	*v = vec_fdot(dir,&qvec);
-	if(*v <-EPSILON || *u + *v > det + EPSILON){
-		return 0;
-	}
-	inv_det = 1.0f/det;
-	*u *= inv_det;
-	*v *= inv_det;
-	*t = vec_fdot(tr->edge+1,&qvec)*inv_det;
-	return 1;
 }
 static void ga_material_shade(	vec_t *color, 
 				const vec_t *pos,
@@ -116,20 +82,27 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 	vec_t ldir;
 	vec_t color = vec_new(0,0,0,1);
 	vec_t uv = vec_new(0,0,0,1);
+	vec_t lcolor = vec_new(0,0,0,1);
 	float fact;
+	float len;
+
 	dir = vec_norm(dir);
 	if(n){	/*if there is a lamp in the scene*/ 
 		while(n){
 			light = (ga_light_t*)n->data;
 			ldir = vec_norm(vec_sub(light->pos,pos));
+			len = vec_len(vec_sub(light->pos,pos)) + 0.001;
+			len *= len;
+			len = 1.0/len;
+			lcolor = vec_scale(len*light->color.w,light->color);
 			ga_material_shade(	&color,
-						&pos,
-						&dir,
-						&norm,
-						&ldir,
-						&(light->color),
-						&uv,
-						mat);
+							&pos,
+							&dir,
+							&norm,
+							&ldir,
+							&(lcolor),
+							&uv,
+							mat);
 			n = n->next;
 		}
 		return color;

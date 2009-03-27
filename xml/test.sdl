@@ -7,8 +7,9 @@
    </Cameras>   
    
    <Lights>
-      <PointLight position="5 8 6" intensity="1" color="1 1 1" name="light0" />
-      <PointLight position="-5 8 -6" intensity="1" color="1 1 1" name="light0" />
+      <PointLight position="5 3 6" intensity="50" color="1 0 0" name="light0" />
+      <PointLight position="-5 3 -6" intensity="25" color="0 1 0" name="light0" />
+      <PointLight position="1 0.3 1" intensity="4" color="0.2 0.2 0.3" name="light0" />
    </Lights>
    
    <Geometry>
@@ -16,27 +17,28 @@
    	<Obj src="xml/obj/sphere.obj" name="sphere" />
    	<Obj src="xml/obj/cube.obj" name="cube" />
    	<Obj src="xml/obj/cone.obj" name="cone" />
-   	<Obj src="xml/obj/triceratops.obj" name="triceratops" />
+	<Obj src="xml/obj/triceratops.obj" name="triceratops" />
+	<Obj src="xml/obj/nightmare.obj" name="nightmare" />
    </Geometry>
    
    <Materials>
-      <DiffuseMaterial color="0.5 0.5 0.3" name="dif0"/>      
+      <DiffuseMaterial color="0.3 0.3 0.3" name="dif0"/>      
       <DiffuseMaterial color="0.9 0.0 0.9" name="dif1"/>      
-      <PhongMaterial color="0.5 0.5 0.5" shininess="10" name="phong0" />
+      <PhongMaterial color="0.5 0.5 0.5" shininess="4" name="phong0" />
       <LinearCombinedMaterial
       	material1="dif0" weight1="1"
-	material2="phong0" weight2="1"
+	material2="phong0" weight2="0.2"
 	name="mat0" />
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">
-   <Scale scale="0.5 0.5 0.5"><Shape geometry="triceratops" material="dif1" /></Scale>
-   <Translate vector="1 0  0">
+   <Scale scale="0.5 0.5 0.5"><Shape geometry="nightmare" material="mat0" /></Scale>
+   <!--<Translate vector="1 0  0">
    <Rotate vector="1 0 0" angle="75">
    <Scale scale="0.3 0.5 0.3">
    <Shape geometry="triceratops" material="mat0" />
    </Scale>
    </Rotate>
-   </Translate>
+   </Translate>-->
    </Scene>
 </Sdl>

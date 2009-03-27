@@ -4,7 +4,7 @@
 #include "ga_geom.h"
 #include "ga_scene.h"
 
-#define GA_THREAD_COUNT 4
+#define GA_THREAD_COUNT 8
 
 /* this is the data given to each rendering thread */
 typedef struct ga_ray_thread_data_s{

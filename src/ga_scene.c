@@ -339,6 +339,8 @@ void ga_scene_build_bounding_box(ga_scene_t *s){
 		vec_fmax(&(s->box_max),&max);
 		n = n->next;
 	}
+	s->box_min = vec_sub(s->box_min,vec_new(0.01,0.01,0.01,0));
+	s->box_max = vec_add(s->box_max,vec_new(0.01,0.01,0.01,0));
 }
 void ga_scene_build_kdtree(ga_scene_t *s){
 	s->kdtree = ga_kdtree_build_octree(s->tri_pool,10,20,0,s->box_min,s->box_max);

@@ -8,13 +8,14 @@
 
 static ga_kdn_t *ga_kdn_new(){
 	ga_kdn_t *kdn = (ga_kdn_t*)malloc(sizeof(ga_kdn_t));
-	memset(kdn,0,sizeof(ga_kdn_t*));
+	memset(kdn,0x42,sizeof(ga_kdn_t));
 	return kdn;
 }
 static ga_kdn_t *ga_kdn_new_leaf(ga_list_t*l){
 	ga_kdn_t *kdn = ga_kdn_new();
 	kdn->flags = GA_KDN_LEAF;
 	kdn->p0 = l;
+	kdn->p1 = NULL;
 	return kdn;
 }
 static void ga_kdn_free(ga_kdn_t*kdn){
@@ -30,14 +31,16 @@ ga_kdn_t *ga_kdtree_build_octree(ga_list_t *tri_list, int max_tri, int max_depth
 	kdn->split = (vec_idx(min,axis) + vec_idx(max,axis))/2.0f;
 	kdn->flags  = GA_KDN_NODE;
 	kdn->axis   = axis;
+	kdn->p0 = NULL;
+	kdn->p1 = NULL;
 
 	n = tri_list->first;
 	while(n){
 		ga_tri_bound((tri_t*)n->data,axis,&low,&up);
-		if(low < kdn->split){
+		if(low <= kdn->split){
 			ga_list_add(l0,n->data);
 		}
-		if(up > kdn->split){
+		if(up >= kdn->split){
 			ga_list_add(l1,n->data);
 		}
 		n = n->next;
@@ -142,10 +145,13 @@ int ga_kdtree_ray_trace(	ga_kdn_t *root,
 	stack[expt].pb = vec_add(*origin,vec_scale(b,*dir));
 	stack[expt].node = NULL;
 
+	ga_kdn_t *test = NULL;
 	while(curr_node != NULL){
-		while(!KDN_IS_LEAF(curr_node)){
+		int i = 0;
+		while(curr_node->flags == 0){
 			float split = KDN_SPLIT(curr_node);
 			int   axis  = KDN_AXIS(curr_node);
+			i++;
 			if(stack_get_pb_axis(stack + enpt, axis) <= split){
 				if(stack_get_pb_axis(stack + expt, axis) <= split){
 					curr_node = KDN_LEFT(curr_node);
@@ -156,6 +162,9 @@ int ga_kdtree_ray_trace(	ga_kdn_t *root,
 				}
 				curr_node = KDN_LEFT(curr_node);
 				far_child = KDN_RIGHT(curr_node);
+				if(far_child == 0x10){
+					test = curr_node;
+				}
 			}else{
 				if(stack_get_pb_axis(stack + expt, axis) > split){
 					curr_node = KDN_RIGHT(curr_node);
