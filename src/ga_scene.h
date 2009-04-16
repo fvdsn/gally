@@ -132,8 +132,12 @@ typedef struct ga_scene_s{
 	ga_kdn_t   *kdtree;
 	vec_t box_min;
 	vec_t box_max;
+	int samples;
+	float dither;
 }ga_scene_t;
 ga_scene_t *ga_scene_new(char *name);
+void ga_scene_set_sampling(ga_scene_t *s, int samples);
+void ga_scene_set_dithering(ga_scene_t *s, float dither);
 /**
  * Sets the image rendering size.
  */

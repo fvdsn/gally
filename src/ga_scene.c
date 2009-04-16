@@ -208,6 +208,12 @@ void ga_scene_set_image(ga_scene_t *s, int sizex, int sizey){
 	s->img = ga_image_new(sizex,sizey);
 	ga_image_fill(s->img,vec_new(0,0,0,1));
 }
+void ga_scene_set_sampling(ga_scene_t *s, int samples){
+	s->samples = samples;
+}
+void ga_scene_set_dithering(ga_scene_t *s, float dither){
+	s->dither = dither;
+}
 void ga_scene_save_image(ga_scene_t *s,char *path){
 	ga_image_save(s->img,path);
 }

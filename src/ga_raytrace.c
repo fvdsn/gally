@@ -9,7 +9,7 @@
 static  float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 	float u = 0.0f;
 	float v = 0.0f;
-	float t = 1000.0;
+	float t = FLT_MAX;
 	tri_t *tri = NULL;
 	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,origin,dir,&tri,&u,&v,&t)){
 		return t;
@@ -85,12 +85,10 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 	float fact;
 	float len;
 	float rlen;
-	float logmax = 1.0/logf(100);
-
 	dir = vec_norm(dir);
 	if(n){	/*if there is a lamp in the scene*/ 
 		while(n){
-			pos = vec_add(pos,vec_scale(0.0001,norm));
+			pos = vec_add(pos,vec_scale(0.00001,norm));
 			light = (ga_light_t*)n->data;
 			ldir = vec_norm(vec_sub(light->pos,pos));
 			len = vec_len(vec_sub(light->pos,pos));
@@ -152,24 +150,42 @@ static void *ga_ray_thread_func(void *data){
 	vec_t dir;
 	int x = td->px;	/*pixel coordinate*/
 	int y = td->py;
+	int px,py;
 	float fx,fy;
+	vec_t color;
 	while(x < td->sx){
 		y = td->py;
-		fx = (float)x/(float)td->scene->img->sizex;
 		if((x%(10*GA_THREAD_COUNT)) == 0){
 			printf("thread %d, line %d\n",td->id,td->sx - x);
 		}
 		while(y < td->sy){	/*iterate over pixels */
-			fy = (float)y/(float)td->scene->img->sizey;
-			/*compute direction to shoot ray */
-			dir = vec_norm(vec_add(td->front,vec_add(
-						vec_sub( vec_scale(fx,td->cr),
-							vec_scale(1.0-fx,td->cr)),
-						vec_sub( vec_scale(fy,td->cu),
-							vec_scale(1.0-fy,td->cu)))));
-			/*launch the ray and sets the result in the image */
-			ga_image_set_pixel(td->scene->img,x,y,
-					ga_ray_trace(td->scene,td->origin,dir));
+			color = vec_new(0,0,0,1);
+			px = 0;
+			while(px < td->samples){
+				py = 0;
+				while(py < td->samples){	/*iterate over samples*/
+					fx = (x +(float)px/(float)td->samples)/(float)td->scene->img->sizex;
+					fy = (y +(float)py/(float)td->samples)/(float)td->scene->img->sizey;
+					/*compute direction to shoot ray */
+					dir = vec_norm(vec_add(td->front,vec_add(
+							vec_sub( vec_scale(fx,td->cr),
+								vec_scale(1.0-fx,td->cr)),
+							vec_sub( vec_scale(fy,td->cu),
+								vec_scale(1.0-fy,td->cu)))));
+					/*accumulate samples*/
+					color = vec_add(color,
+						vec_scale(1.0f/(td->samples*td->samples),
+						ga_ray_trace(td->scene,td->origin,dir)));
+					py++;
+				}
+				px++;
+			}
+			color = vec_add(color,vec_new(
+				((float)random()/(float)RAND_MAX)*td->dither/256.0f,
+				((float)random()/(float)RAND_MAX)*td->dither/256.0f,
+				((float)random()/(float)RAND_MAX)*td->dither/256.0f,
+				0));
+			ga_image_set_pixel(td->scene->img,x,y,color);
 			y++;
 		}
 		x++;
@@ -195,6 +211,7 @@ void ga_ray_render(ga_scene_t *s){
 						 * center */
 	int i = GA_THREAD_COUNT;
 	int dy = (s->img->sizey / GA_THREAD_COUNT) + 1;
+	printf("Sampling : %d\n",s->samples);
 	while(i--){
 		thread_data[i].id = i;
 		thread_data[i].front = front;
@@ -203,6 +220,8 @@ void ga_ray_render(ga_scene_t *s){
 		thread_data[i].cr = cr;
 		thread_data[i].scene = s;
 		thread_data[i].px = 0;
+		thread_data[i].samples = s->samples;
+		thread_data[i].dither = s->dither;
 		thread_data[i].sx = s->img->sizex;
 		if(dy*(i+1) > s->img->sizey){
 			thread_data[i].sy = s->img->sizey;

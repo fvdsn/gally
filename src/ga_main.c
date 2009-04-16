@@ -13,6 +13,8 @@ Optional arguments:\
 \n\t-out=PATH     : path to the png output -default : out.png. \
 \n\t-sx=INT       : the horizontal rendering size (default:256)\
 \n\t-sy=INT       : the vertical rendering size   (default:256)\
+\n\t-samples=INT  : oversampling (default:1)\
+\n\t-dither=FLOAT : dithering [0,1], (default:0)\
 \n\t-h(elp)       : displays this message.\n";
 
 int main(int argc, char **argv){
@@ -21,6 +23,8 @@ int main(int argc, char **argv){
 	int	sizex = 512;
 	int 	sizey = 512;
 	int	raytrace = 1;
+	int	samples  = 1;
+	float   dither = 0.0f;
 	ga_scene_t *s = NULL;
 	int i = argc;
 	while(i--){
@@ -45,6 +49,18 @@ int main(int argc, char **argv){
 				fprintf(stderr,"WARNING: invalid y size:%d, set to default (256)\n",sizey);
 				sizey = 256;
 			}
+		}else if(!strncmp(argv[i],"-samples=",9)){
+			samples = (int)strtol(argv[i]+9,NULL,10);
+			if(samples <= 0){
+				fprintf(stderr,"WARNING: invalid sampling:%d, set to default(1)\n",samples);
+			}else if (samples > 8){
+				fprintf(stderr,"WARNING: very high sampling:%d, render will be slow\n",samples);
+			}
+		}else if(!strncmp(argv[i],"-dither=",8)){
+			dither = (float)strtod(argv[i]+8,NULL);
+			if(dither < 0.0f || dither > 1.0f){
+				fprintf(stderr,"WARNING: dithering beyond reasonable range [0,1] : %f\n",dither);
+			}
 		}else if(!strncmp(argv[i],"-h",2)){
 			printf("%s",help_text);
 			return 0;
@@ -65,6 +81,8 @@ int main(int argc, char **argv){
 		return 1;
 	}
 	ga_scene_set_image(s,sizex,sizey);
+	ga_scene_set_sampling(s,samples);
+	ga_scene_set_dithering(s,dither);
 	if(raytrace){
 		printf("Applying scene graph transforms\n");
 		ga_scene_build_triangle(s);

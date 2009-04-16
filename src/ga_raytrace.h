@@ -13,6 +13,8 @@ typedef struct ga_ray_thread_data_s{
 	int py;
 	int sx;	/*top right corner of thread render zone (excluded) */
 	int sy;
+	int samples;
+	float dither;
 	vec_t front;	/*normalized vector in the viewing direction*/ 
 	vec_t origin;	/*camera position*/
 	vec_t cu;	/*vector to the top of the complete render zone*/
