@@ -18,8 +18,8 @@ Optional arguments:\
 int main(int argc, char **argv){
 	char * sdl_path = NULL;
 	char * png_path = "out.png";
-	int	sizex = 256;
-	int 	sizey = 256;
+	int	sizex = 512;
+	int 	sizey = 512;
 	int	raytrace = 1;
 	ga_scene_t *s = NULL;
 	int i = argc;

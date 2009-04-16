@@ -6,16 +6,15 @@
 #include "ga_raytrace.h"
 #include "ga_img.h"
 #include "ga_kdt.h"
-static  int ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
+static  float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 	float u = 0.0f;
 	float v = 0.0f;
-	float t = 0.0;
+	float t = 1000.0;
 	tri_t *tri = NULL;
-	if( ga_kdn_trace(s->kdtree,s->box_min,s->box_max,
-			origin,dir,&tri,&u,&v,&t) && t > 0){
-		return 1;
+	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,origin,dir,&tri,&u,&v,&t)){
+		return t;
 	}else{
-		return 0;
+		return FLT_MAX;
 	}
 }
 static void ga_material_shade(	vec_t *color, 
@@ -76,7 +75,7 @@ static void ga_material_shade(	vec_t *color,
  * from dir, intersection normal is at norm, surface material is mat, scene is
  * s
  */
-static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *mat,ga_scene_t *s){
+static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *mat,const ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *light;
 	vec_t ldir;
@@ -85,14 +84,18 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 	vec_t lcolor = vec_new(0,0,0,1);
 	float fact;
 	float len;
+	float rlen;
+	float logmax = 1.0/logf(100);
 
 	dir = vec_norm(dir);
 	if(n){	/*if there is a lamp in the scene*/ 
 		while(n){
+			pos = vec_add(pos,vec_scale(0.0001,norm));
 			light = (ga_light_t*)n->data;
 			ldir = vec_norm(vec_sub(light->pos,pos));
-			len = vec_len(vec_sub(light->pos,pos)) + 0.001;
-			if(!ga_ray_length(s,vec_add(pos,vec_scale(1,ldir)),ldir)){
+			len = vec_len(vec_sub(light->pos,pos));
+			rlen = ga_ray_length(s,pos,ldir);
+			if(len < rlen){
 				len *= len;
 				len = 1.0/len;
 				lcolor = vec_scale(len*light->color.w,light->color);
@@ -104,7 +107,7 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 								&(lcolor),
 								&uv,
 								mat);
-				}
+			}
 			n = n->next;
 		}
 		return color;
@@ -118,7 +121,7 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
  * Returns the color from launching a ray at start in direction dir, in scene
  * s
  */
-vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
+vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir){
 	tri_t *tri  = NULL;
 	float t = 0.0f;
 	float u = 0.0f;

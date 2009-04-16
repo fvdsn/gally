@@ -20,7 +20,7 @@ static ga_kdn_t *ga_kdn_new_leaf(ga_list_t *tri_list){
 	kdn->data = tri_list;
 	return kdn;
 }
-static int ga_kdn_is_leaf(ga_kdn_t *kdn){
+static int ga_kdn_is_leaf(const ga_kdn_t *kdn){
 	if(kdn->data && !kdn->left && !kdn->right){
 		return 1;
 	}else if(!kdn->data && kdn->left && kdn->right){
@@ -80,16 +80,31 @@ ga_kdn_t *ga_kdn_octree(ga_list_t *tri_list, int max_depth, int min_tri, int axi
 	}
 	return kdn;
 }
-int ga_kdn_trace(ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, tri_t **tri, float *u, float *v, float *dist){
-	float a1,b1,a2,b2;
+int ga_kdn_trace(const ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, tri_t **tri, float *u, float *v, float *t){
+	float a1,b1,a2,b2,_u,_v,_t;
 	int hit1,hit2;
 	vec_t lmax = max;
 	vec_t rmin = min;
 	int hit = 0;
+	ga_node_t *n = NULL;
 	if(!ga_ray_box_intersect(&origin,&dir,&min,&max,&a1,&b1)){
 		return 0;
 	}else if(ga_kdn_is_leaf(root)){
-		/*test triangles*/
+		n = root->data->first;
+		while(n){
+			if(ga_ray_tri_intersect((tri_t*)n->data,&origin,&dir,
+						&_t,&_u,&_v) 
+					&& (_t >= 0.0f) && (_t >= a1) && (_t <= b1)){
+				if(!hit || (hit && _t < *t)){
+					hit = 1;
+					*t = _t;
+					*u = _u;
+					*v = _v;
+					*tri = (tri_t*)n->data;
+				}
+			}
+			n = n->next;
+		}
 		return hit;
 	}else{
 		switch(root->axis){
@@ -108,8 +123,8 @@ int ga_kdn_trace(ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, 
 		hit2 = ga_ray_box_intersect(&origin,&dir,&rmin,&max,&a2,&b2);
 		if(hit1 && hit2){
 			if(a1 < a2){
-				if(!ga_kdn_trace(root,min,lmax,origin,dir,tri,u,v,dist)){
-					if(!ga_kdn_trace(root,rmin,max,origin,dir,tri,u,v,dist)){
+				if(!ga_kdn_trace(root->left,min,lmax,origin,dir,tri,u,v,t)){
+					if(!ga_kdn_trace(root->right,rmin,max,origin,dir,tri,u,v,t)){
 						return 0;
 					}else{
 						return 1;
@@ -118,8 +133,8 @@ int ga_kdn_trace(ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, 
 					return 1;
 				}
 			}else{
-				if(!ga_kdn_trace(root,rmin,max,origin,dir,tri,u,v,dist)){
-					if(!ga_kdn_trace(root,min,lmax,origin,dir,tri,u,v,dist)){
+				if(!ga_kdn_trace(root->right,rmin,max,origin,dir,tri,u,v,t)){
+					if(!ga_kdn_trace(root->left,min,lmax,origin,dir,tri,u,v,t)){
 						return 0;
 					}else{
 						return 1;
@@ -129,9 +144,9 @@ int ga_kdn_trace(ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, 
 				}
 			}
 		}else if(hit1){
-			return ga_kdn_trace(root,min,lmax,origin,dir,tri,u,v,dist);
+			return ga_kdn_trace(root->left,min,lmax,origin,dir,tri,u,v,t);
 		}else if(hit2){
-			return ga_kdn_trace(root,min,lmax,origin,dir,tri,u,v,dist);
+			return ga_kdn_trace(root->right,rmin,max,origin,dir,tri,u,v,t);
 		}
 		fprintf(stderr,"WARNING : impossible case in ray tracing\n");
 		return 0;

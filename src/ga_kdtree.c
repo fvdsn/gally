@@ -230,18 +230,21 @@ int ga_kdtree_ray_rec(const ga_kdn_t *root,
 		hit = 0;
 		while(n){
 			if(ga_ray_tri_intersect((tri_t*)n->data,origin,dir,
-						&_t,&_u,&_v)
-					&& (_t >= _a) && (_t <= _b)){
-				if(!hit || (hit && _t < *t)){
-					hit = 1;
-					*t = _t;
-					*u = _u;
-					*v = _v;
-					*tri = (tri_t*)n->data;
+						&_t,&_u,&_v)){
+				if((_t >= 0.0f) && (_t >= _a) && (_t <= _b)){
+					if(!hit || (hit && _t < *t)){
+						hit = 1;
+						*t = _t;
+						*u = _u;
+						*v = _v;
+						*tri = (tri_t*)n->data;
+					}
 				}
 			}
 			n = n->next;
 		}
+		if(hit && *t <=0){
+			printf("FUUUUUCK:%f\n",*t);
 		return hit;
 	}else{
 		p0_max = box_max;

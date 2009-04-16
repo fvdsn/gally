@@ -18,6 +18,6 @@ typedef struct ga_kdn_s{
 }ga_kdn_t;
 
 ga_kdn_t *ga_kdn_octree(ga_list_t *tri_list, int max_depth, int min_tri, int axis, vec_t min, vec_t max);
-int ga_kdn_trace(ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, tri_t **tri, float *u, float *v, float *dist);
+int ga_kdn_trace(const ga_kdn_t *root, vec_t min, vec_t max, vec_t origin, vec_t dir, tri_t **tri, float *u, float *v, float *dist);
 
 #endif
