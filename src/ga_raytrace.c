@@ -11,8 +11,8 @@ static  int ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 	float v = 0.0f;
 	float t = 0.0;
 	tri_t *tri = NULL;
-	if( ga_kdtree_ray_trace(s->kdtree,&(s->box_min),&(s->box_max),
-			&origin,&dir,&tri,&u,&v,&t) ){
+	if( ga_kdn_trace(s->kdtree,s->box_min,s->box_max,
+			origin,dir,&tri,&u,&v,&t) && t > 0){
 		return 1;
 	}else{
 		return 0;
@@ -92,7 +92,7 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 			light = (ga_light_t*)n->data;
 			ldir = vec_norm(vec_sub(light->pos,pos));
 			len = vec_len(vec_sub(light->pos,pos)) + 0.001;
-			if(!ga_ray_length(s,vec_add(pos,vec_scale(0.01,ldir)),ldir)){
+			if(!ga_ray_length(s,vec_add(pos,vec_scale(1,ldir)),ldir)){
 				len *= len;
 				len = 1.0/len;
 				lcolor = vec_scale(len*light->color.w,light->color);
@@ -129,7 +129,7 @@ vec_t ga_ray_trace(ga_scene_t *s, vec_t start, vec_t dir){
 	vec_t pos;
 	vec_t ret;
 	dir = vec_norm(dir);
-	if(ga_kdtree_ray_trace(s->kdtree,&(s->box_min),&(s->box_max),&start,&dir,
+	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,start,dir,
 				&tri,&u,&v,&t)){
 		normal = vec_add(vec_scale(u,tri->vnorm[1]),
 			 vec_add(vec_scale(v,tri->vnorm[2]),

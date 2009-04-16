@@ -8,7 +8,7 @@ MAIN_BIN = render.bin
 all : Makefile main
 
 main: ga_main.o
-	${CC} ${FLAGS} ${LIBS} -o ${MAIN_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o ga_raytrace.o ga_main.o ga_kdtree.o
+	${CC} ${FLAGS} ${LIBS} -o ${MAIN_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o ga_raytrace.o ga_main.o ga_kdt.o
 
 rasteriser: ga_raster.o 
 	${CC} ${FLAGS} ${LIBS} -o ${RAS_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o
@@ -22,8 +22,8 @@ loader: ga_scene_load.o ga_scene.o
 ga_main.o : src/ga_main.c ga_raster.o ga_raytrace.o ga_kdtree.o
 	${CC} ${FLAGS} -c src/ga_main.c
 
-ga_kdtree.o : src/ga_kdtree.c src/ga_kdtree.h ga_geom.o ga_list.o
-	${CC} ${FLAGS} -c src/ga_kdtree.c
+ga_kdt.o : src/ga_kdt.c src/ga_kdt.h ga_geom.o ga_list.o
+	${CC} ${FLAGS} -c src/ga_kdt.c
 
 ga_raster.o: src/ga_raster.c src/ga_raster.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
 	${CC} ${FLAGS} -c src/ga_raster.c

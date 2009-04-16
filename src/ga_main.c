@@ -3,7 +3,7 @@
 #include<stdio.h>
 #include "ga_raytrace.h"
 #include "ga_raster.h"
-#include "ga_kdtree.h"
+#include "ga_kdt.h"
 
 static const char *help_text = "Mendatory arguments : \
 \n\t-scene=PATH   : the path to the sdl scene file\n\

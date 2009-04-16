@@ -37,6 +37,12 @@ int ga_kdtree_ray_trace(	ga_kdn_t *root,
 			const vec_t *origin,
 			const vec_t *dir,
 			tri_t **tri, float *u, float *v, float *dist);
+int ga_kdtree_ray_rec(const ga_kdn_t *root, 
+			vec_t box_min, 
+			vec_t box_max, 
+			const vec_t *origin, 
+			const vec_t *dir,
+			tri_t **tri, float *u, float *v, float *t);
 
 #endif
 
