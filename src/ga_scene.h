@@ -3,7 +3,7 @@
 #include "ga_geom.h"
 #include "ga_list.h" 
 #include "ga_img.h"
-#include "ga_kdtree.h"
+#include "ga_kdt.h"
 
 #define STRING_LENGTH GA_NAME_LENGTH
 #define GA_MAX_COMB_MATERIAL 16

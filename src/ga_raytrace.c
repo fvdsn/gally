@@ -5,7 +5,7 @@
 #include <pthread.h>
 #include "ga_raytrace.h"
 #include "ga_img.h"
-#include "ga_kdtree.h"
+#include "ga_kdt.h"
 static  int ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 	float u = 0.0f;
 	float v = 0.0f;

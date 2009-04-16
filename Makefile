@@ -19,7 +19,7 @@ raytracer: ga_raytrace.o
 loader: ga_scene_load.o ga_scene.o
 	${CC} ${FLAGS} ${LIBS} -o ${BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o
 
-ga_main.o : src/ga_main.c ga_raster.o ga_raytrace.o ga_kdtree.o
+ga_main.o : src/ga_main.c ga_raster.o ga_raytrace.o ga_kdt.o
 	${CC} ${FLAGS} -c src/ga_main.c
 
 ga_kdt.o : src/ga_kdt.c src/ga_kdt.h ga_geom.o ga_list.o
@@ -28,7 +28,7 @@ ga_kdt.o : src/ga_kdt.c src/ga_kdt.h ga_geom.o ga_list.o
 ga_raster.o: src/ga_raster.c src/ga_raster.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
 	${CC} ${FLAGS} -c src/ga_raster.c
 
-ga_raytrace.o: src/ga_raytrace.c src/ga_raytrace.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
+ga_raytrace.o: src/ga_raytrace.c src/ga_raytrace.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o ga_kdt.o
 	${CC} ${FLAGS} -c src/ga_raytrace.c
 
 ga_scene_load.o: src/ga_scene_load.c src/ga_scene.h ga_math.o ga_geom.o ga_list.o
