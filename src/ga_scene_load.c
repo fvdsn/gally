@@ -47,6 +47,8 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
 	vec_t position 	= vec_new(0,0,0,1);
 	vec_t color 	= vec_new(1,1,1,1);
+	float radius	= 0.0f;
+	int   samples   = 1;
 	float intensity	= 1.0f;
 	char * name	= "unnamed_point_light";
 	while(a){
@@ -56,6 +58,10 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 			color	 = vec_parse((char*)a->children->content);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"intensity")){
 			intensity= (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"radius")){
+			radius = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"samples")){
+			samples = (int)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
@@ -64,7 +70,7 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 		a = a->next;
 	}
 	color.w = intensity;
-	ga_scene_add_light(s,ga_light_new(name,position,color));
+	ga_scene_add_light(s,ga_light_new(name,position,color,radius,samples));
 }
 static void ga_obj_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;

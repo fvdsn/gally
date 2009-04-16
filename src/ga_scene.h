@@ -42,8 +42,10 @@ typedef struct ga_light_s{
 	char name[STRING_LENGTH];
 	vec_t  pos;	/* light position */
 	vec_t  color; 	/*.w = intensity */
+	float  radius;
+	int    samples;
 }ga_light_t;
-ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color);
+ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius, int samples);
 void	ga_light_print(ga_light_t*l);
 
 /*------- MATERIAL --------*/

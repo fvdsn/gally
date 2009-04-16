@@ -20,11 +20,13 @@ void  ga_cam_print(ga_cam_t*c){
 			c->up.x,  c->up.y,  c->up.z,
 			c->fov, c->name);
 }
-ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color){
+ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius,int samples){
 	ga_light_t*l = (ga_light_t*)malloc(sizeof(ga_light_t));
 	strncpy(l->name,name,STRING_LENGTH);
 	l->pos   = pos;
 	l->color = color;
+	l->radius = radius;
+	l->samples = samples;
 	return l;
 }
 void	ga_light_print(ga_light_t*l){

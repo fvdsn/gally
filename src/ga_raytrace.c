@@ -24,7 +24,8 @@ static void ga_material_shade(	vec_t *color,
 				const vec_t *ldir, 
 				const vec_t *lcol,
 				const vec_t *uv,
-				const ga_material_t *mat){
+				const ga_material_t *mat,
+				float intensity){
 	float fact = 0.0f;
 	float power = 0.0f;
 	vec_t tmp_color = vec_new(0,0,0,1);
@@ -39,31 +40,31 @@ static void ga_material_shade(	vec_t *color,
 			if((fact = vec_dot(r,vec_neg(*dir))) > 0.0f){
 				power = powf(fact,mat->power);
 				*color = vec_add(*color,
-					vec_scale( power,
+					vec_scale( power*intensity,
 						vec_mult(mat->color,*lcol)));
 			}
 			break;
 		case GA_MATERIAL_DIFFUSE:
 			if((fact = vec_dot(*norm,*ldir)) > 0.0f){
 				*color = vec_add(*color,
-					vec_scale(fact,vec_mult(mat->color,*lcol)));
+					vec_scale(fact*intensity,vec_mult(mat->color,*lcol)));
 			}
 			break;
 		case GA_MATERIAL_EMIT:
-			*color = vec_add(*color,mat->color);
+			*color = vec_add(*color,vec_scale(intensity,mat->color));
 			break;
 		case GA_MATERIAL_FLAT:
-			*color = vec_add(*color,vec_mult(mat->color,*lcol));
+			*color = vec_add(*color,vec_scale(intensity,vec_mult(mat->color,*lcol)));
 			break;
 		case GA_MATERIAL_BLENDING:
-			ga_material_shade(&tmp_color,pos,dir,norm,ldir,lcol,uv,mat->child);
-			*color = vec_add(*color,vec_scale(mat->alpha,tmp_color));
+			ga_material_shade(&tmp_color,pos,dir,norm,ldir,lcol,uv,mat->child,intensity);
+			*color = vec_add(*color,vec_scale(mat->alpha*intensity,tmp_color));
 			break;
 		case GA_MATERIAL_COMB:
 			n = mat->comb->first;
 			while(n){
 				comb = (ga_material_t*)n->data;
-				ga_material_shade(color,pos,dir,norm,ldir,lcol,uv,comb);
+				ga_material_shade(color,pos,dir,norm,ldir,lcol,uv,comb,intensity);
 				n = n->next;
 			}
 			break;
@@ -75,6 +76,7 @@ static void ga_material_shade(	vec_t *color,
  * from dir, intersection normal is at norm, surface material is mat, scene is
  * s
  */
+
 static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *mat,const ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *light;
@@ -82,6 +84,8 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 	vec_t color = vec_new(0,0,0,1);
 	vec_t uv = vec_new(0,0,0,1);
 	vec_t lcolor = vec_new(0,0,0,1);
+	vec_t lsample,d1,d2;
+	int sample;
 	float fact;
 	float len;
 	float rlen;
@@ -90,21 +94,37 @@ static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *
 		while(n){
 			pos = vec_add(pos,vec_scale(0.00001,norm));
 			light = (ga_light_t*)n->data;
-			ldir = vec_norm(vec_sub(light->pos,pos));
-			len = vec_len(vec_sub(light->pos,pos));
-			rlen = ga_ray_length(s,pos,ldir);
-			if(len < rlen){
-				len *= len;
-				len = 1.0/len;
-				lcolor = vec_scale(len*light->color.w,light->color);
-				ga_material_shade(	&color,
-								&pos,
-								&dir,
-								&norm,
-								&ldir,
-								&(lcolor),
-								&uv,
-								mat);
+			sample = light->samples;
+			lsample = light->pos;
+			ldir = vec_sub(light->pos,pos);
+			vec_fperp(&ldir,&d1,&d2);
+			while(sample--){
+				do{
+					lsample = vec_add(
+							vec_scale((-1.0f + 2.0f*random()*RAND_NORM)*light->radius,d1),
+							vec_scale((-1.0f + 2.0f*random()*RAND_NORM)*light->radius,d2));
+				}while(vec_len(lsample) > light->radius + 0.000001);
+				lsample = vec_add(light->pos,lsample);
+
+				
+				
+				ldir = vec_norm(vec_sub(lsample,pos));
+				len = vec_len(vec_sub(light->pos,pos));
+				rlen = ga_ray_length(s,pos,ldir);
+				if(len < rlen){
+					len *= len;
+					len = 1.0/len;
+					lcolor = vec_scale(len*light->color.w,light->color);
+					ga_material_shade(	&color,
+									&pos,
+									&dir,
+									&norm,
+									&ldir,
+									&(lcolor),
+									&uv,
+									mat,
+									1.0f/light->samples);
+				}
 			}
 			n = n->next;
 		}

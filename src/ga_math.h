@@ -1,6 +1,7 @@
 #ifndef __GALLY_MATH_H__
 #define __GALLY_MATH_H__
 
+#define RAND_NORM 1.0f/(float)RAND_MAX
 typedef struct vec_s{
 	float x;
 	float y;
@@ -86,6 +87,7 @@ vec_t vec_print(vec_t a);
  * Returns 1 if the vector are equals when homogenized.
  */
 int   vec_equal(vec_t a, vec_t b);
+void  vec_fperp(const vec_t *a, vec_t *p1, vec_t *p2);
 
 /* fast operations */
 /**

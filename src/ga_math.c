@@ -151,6 +151,28 @@ int vec_equal(vec_t a, vec_t b){
 	b = vec_homog(b);
 	return (a.x == b.x && a.y == b.y && a.z == b.z);
 }
+void  vec_fperp(const vec_t *a, vec_t *p1, vec_t *p2){
+	p1->x = a->x;
+	p1->y = a->y;
+	p1->z = a->z;
+	if(p1->x != 0.0f){
+		p1->x = -p1->x;
+	}else if(p1->y != 0.0f){
+		p1->y = -p1->y;
+	}else if(p1->z != 0.0f){
+		p1->z = -p1->z;
+	}else{
+		p1->x = 1.0f;
+	}
+	vec_fcross(p2,a,p1);
+	vec_fnorm(p2);
+	vec_fcross(p1,a,p2);
+	vec_fnorm(p1);
+}
+inline void vec_fnorm(vec_t *a){
+	float n = sqrtf(a->x*a->x + a->y*a->y + a->z*a->z);
+	vec_fscale(1.0f/n,a);
+}
 inline void  vec_fsub(vec_t *d, const vec_t *a, const vec_t *b){
 	d->x = a->x - b->x;
 	d->y = a->y - b->y;
