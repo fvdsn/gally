@@ -18,12 +18,42 @@ float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 		return FLT_MAX;
 	}
 }
+static void ga_ray_photon_trace(const ga_scene_t *s, vec_t pos, vec_t dir, vec_t color, int max_rec, int min_store){
+	ga_material_t *mat;
+	tri_t *tri = NULL;
+	float t = 0.0f;
+	float u = 0.0f;
+	float v = 0.0f;
+	vec_t normal,dpos,d1,d2,ddir;
+	if(max_rec <=0){
+		return;
+	}else if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,pos,dir,&tri,&u,&v,&t)){
+		mat = tri->material;
+		normal = vec_add(vec_scale(u,tri->vnorm[1]),
+			 vec_add(vec_scale(v,tri->vnorm[2]),
+				vec_scale(1.0f-u-v,tri->vnorm[0])));
+		dpos = vec_add(vec_add(pos,vec_scale(t,dir)),vec_scale(0.0001,normal));
+		dir  = vec_neg(dir);
+		if(min_store <= 0){
+			ga_photonmap_add(s->pm,&dpos,&color,&normal,&dir);
+		}
+		color = vec_mult(color,vec_scale(mat->diff_factor,mat->diff_color));
+		vec_fperp(&normal,&d1,&d2);
+
+		ddir = vec_new(0,0,0,1);
+		vec_ffadd(&ddir,random()*RAND_NORM,&normal);
+		vec_ffadd(&ddir,(2.0f*random()*RAND_NORM) -1.0f,&d1);
+		vec_ffadd(&ddir,(2.0f*random()*RAND_NORM) -1.0f,&d2);
+
+		ga_ray_photon_trace(s,dpos,ddir,color,max_rec -1,min_store -1);
+	}
+}
 void ga_ray_gi_compute(ga_scene_t *s){
 	ga_node_t *n = s->light->first;
 	ga_light_t *l;
 	int photons;
-	vec_t dir,pos,color;
-	s->pm = ga_photonmap_new(s->box_min,s->box_max,s->bg_color,s->pm_resolution);
+	vec_t dir;
+	s->pm = ga_photonmap_new(s->box_min,s->box_max,s->pm_resolution);
 	while(n){
 		l = (ga_light_t*)n->data;
 		photons = l->photons;
@@ -34,12 +64,12 @@ void ga_ray_gi_compute(ga_scene_t *s){
 			dir.z = (2.0f*random()*RAND_NORM) - 1.0f;
 			dir.w = 1;
 			vec_fnorm(&dir);
-			color = ga_ray_trace(s,l->pos,dir,1,0,&pos);
-			ga_photonmap_add(s->pm,pos,vec_scale(l->photon_weight,color));
+			ga_ray_photon_trace(s,l->pos,dir,vec_scale(1.0f/l->photons*l->color.w*l->photon_weight,l->color),3,1);
 		}
 		n = n->next;
 	}
 }
+
 
 /**
  * Returns the color from launching a ray at start in direction dir, in scene
@@ -72,6 +102,7 @@ vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir,float importance,
 	}
 	return s->bg_color;
 }
+/*
 static vec_t ga_ray_trace_photonmap(const ga_scene_t *s, vec_t start, vec_t dir){
 	tri_t *tri  = NULL;
 	float t = 0.0f;
@@ -85,7 +116,7 @@ static vec_t ga_ray_trace_photonmap(const ga_scene_t *s, vec_t start, vec_t dir)
 		return ga_photonmap_get(s->pm,pos);
 	}
 	return s->bg_color;
-}
+}*/
 /* render a part of the render image to the scene output buffer.
  * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
 static void *ga_ray_thread_func(void *data){

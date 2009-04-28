@@ -161,7 +161,7 @@ typedef struct ga_scene_s{
 	ga_image_t *img;		/* output image */
 	ga_kdn_t   *kdtree;
 	ga_photonmap_t *pm;
-	int pm_resolution;		/* TODO */
+	float pm_resolution;		
 	vec_t box_min;
 	vec_t box_max;
 	int samples;
@@ -170,7 +170,7 @@ typedef struct ga_scene_s{
 ga_scene_t *ga_scene_new(char *name);
 void ga_scene_set_sampling(ga_scene_t *s, int samples);
 void ga_scene_set_dithering(ga_scene_t *s, float dither);
-void ga_scene_set_pm_resolution(ga_scene_t *s, int resolution);
+void ga_scene_set_pm_resolution(ga_scene_t *s, float resolution);
 /**
  * Sets the image rendering size.
  */

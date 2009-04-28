@@ -216,6 +216,10 @@ inline float vec_fidx(const vec_t *a, int i){
 inline int vec_fzero(const vec_t *a){
 	return (a->x == 0.0f && a->y == 0.0f && a->z == 0.0f);
 }
+inline float vec_fsqdist(const vec_t *a, const vec_t *b){
+	return (a->x-b->x)*(a->x-b->x) + (a->y-b->y)*(a->y-b->y) + 
+			(a->z-b->z)*(a->z-b->z);
+}
 
 #define V_I(v,i)    ((float*)(&v))[i]
 #define M_IJ(m,i,j) ((float*)(m))[i*4+j]

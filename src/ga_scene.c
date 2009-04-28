@@ -205,7 +205,7 @@ void ga_scene_set_sampling(ga_scene_t *s, int samples){
 void ga_scene_set_dithering(ga_scene_t *s, float dither){
 	s->dither = dither;
 }
-void ga_scene_set_pm_resolution(ga_scene_t *s, int resolution){
+void ga_scene_set_pm_resolution(ga_scene_t *s, float resolution){
 	s->pm_resolution = resolution;
 }
 void ga_scene_save_image(ga_scene_t *s,char *path){

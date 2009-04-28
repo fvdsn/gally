@@ -117,6 +117,7 @@ inline void  vec_fnorm(vec_t *a);
 inline float vec_fdot(const vec_t *a, const vec_t *b);
 inline float vec_fidx(const vec_t *a, int i);
 inline int   vec_fzero(const vec_t *a);
+inline float vec_fsqdist(const vec_t *a, const vec_t *b);
 
 /**
  * Allocates a matrix with all components set to zero

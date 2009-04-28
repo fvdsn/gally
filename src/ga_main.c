@@ -24,7 +24,7 @@ int main(int argc, char **argv){
 	int 	sizey = 512;
 	int	raytrace = 1;
 	int	samples  = 1;
-	int 	pm_res   = 50;
+	float 	pm_res   = 0.2;
 	float   dither = 0.0f;
 	ga_scene_t *s = NULL;
 	int i = argc;
@@ -58,11 +58,11 @@ int main(int argc, char **argv){
 				fprintf(stderr,"WARNING: very high sampling:%d, render will be slow\n",samples);
 			}
 		}else if(!strncmp(argv[i],"-photonmap=",11)){
-			pm_res = (int)strtol(argv[i]+11,NULL,10);
+			pm_res = (float)strtod(argv[i]+11,NULL);
 			if(pm_res <= 0){
-				fprintf(stderr,"WARNING: invalid photonmap resolution:%d, set to default(50)\n",samples);
-			}else if (samples > 500){
-				fprintf(stderr,"WARNING: very high photonmap resolution:%d, render will be slow\n",samples);
+				fprintf(stderr,"WARNING: invalid photonmap resolution:%d, set to default(0.1)\n",samples);
+			}else if (samples > 1){
+				fprintf(stderr,"WARNING: very low resolution:%d, render will be slow\n",samples);
 			}
 		}else if(!strncmp(argv[i],"-dither=",8)){
 			dither = (float)strtod(argv[i]+8,NULL);

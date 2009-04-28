@@ -63,11 +63,12 @@ static void ga_shade_ao(vec_t *color, const ga_scene_t *s, const ga_material_t *
 	*color = vec_add(*color,
 			vec_scale(1.0f/mat->ao_sample*mat->ao_factor,ao_color));
 }
-static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm, float importance){
+
+static void ga_shade_sky(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm, float importance){
 	int sample = mat->gi_sample;
 	float rlen;
-	vec_t gi_color = vec_new(0,0,0,1);
-	vec_t dsample,d1,d2,dpos,lcolor;
+	vec_t sky_color = vec_new(0,0,0,1);
+	vec_t dsample,d1,d2;
 	vec_fperp(norm,&d1,&d2);
 	while(sample--){
 		dsample = vec_new(0,0,0,1);
@@ -75,15 +76,35 @@ static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *
 		vec_ffadd(&dsample,(2.0f*random()*RAND_NORM) -1.0f,&d1);
 		vec_ffadd(&dsample,(2.0f*random()*RAND_NORM) -1.0f,&d2);
 		rlen = ga_ray_length(s,*pos,dsample);
-		dpos = vec_add(*pos,vec_scale(rlen,dsample));
-		lcolor = ga_photonmap_get(s->pm,dpos);
-		ga_shade_diffuse(&gi_color,mat,&lcolor,&dsample,norm,1.0f);
+		if(rlen >= FLT_MAX){
+			ga_shade_diffuse(&sky_color,mat,&(s->bg_color),&dsample,norm,1.0f);
+		}
 	}
 	*color = vec_add(*color,
-			vec_scale(1.0f/mat->gi_sample*mat->gi_factor,gi_color));
+			vec_scale(1.0f/mat->gi_sample*mat->gi_factor,sky_color));
 }
-		
-
+static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm){
+	float sqradius = s->pm_resolution*s->pm_resolution;
+	vec_t gi_color = vec_new(0,0,0,1);
+	vec_t lcolor;
+	ga_node_t *n = ga_photonmap_get(s->pm,pos)->first;
+	ga_photon_t *p = NULL;
+	float factor,dist;
+	float energy = 0;
+	while(n){
+		p = (ga_photon_t*)n->data;
+		dist = vec_fsqdist(pos,&(p->pos));
+		if(dist < sqradius && vec_fdot(norm,&(p->normal)) >= 0.8f){
+			factor = 1.0f/ (3.141592 * sqradius) *mat->gi_factor;
+			energy += factor;
+			lcolor = vec_scale(factor,p->color);
+			ga_shade_diffuse(&gi_color,mat,&lcolor,&(p->ldir),norm,1.0f);
+		}
+		n = n->next;
+	}
+	*color = vec_add(*color,gi_color);
+			
+}					
 
 vec_t ga_ray_shade(	const vec_t * pos, 
 			const vec_t * dir, 
@@ -122,8 +143,12 @@ vec_t ga_ray_shade(	const vec_t * pos,
 		ga_shade_ao(&color,s,mat,&dpos,norm,importance && max_rec > 0);
 	}
 	if(mat->gi_factor != 0.0f && mat->diff_factor != 0.0f && max_rec > 0){
-		ga_shade_gi(&color,s,mat,&dpos,norm,importance);
+		ga_shade_gi(&color,s,mat,&dpos,norm);
 	}
+	if(mat->gi_sample){
+		ga_shade_sky(&color,s,mat,&dpos,norm,importance);
+	}
+		
 	n = s->light->first;
 	if(n && (mat->diff_factor != 0.0f || mat->spec_factor != 0.0f ||
 				mat->flat_factor != 0.0f )){
