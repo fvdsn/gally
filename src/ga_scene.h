@@ -4,6 +4,7 @@
 #include "ga_list.h" 
 #include "ga_img.h"
 #include "ga_kdt.h"
+#include "ga_photonmap.h"
 
 #define STRING_LENGTH GA_NAME_LENGTH
 #define GA_MAX_COMB_MATERIAL 16
@@ -42,36 +43,63 @@ typedef struct ga_light_s{
 	char name[STRING_LENGTH];
 	vec_t  pos;	/* light position */
 	vec_t  color; 	/*.w = intensity */
+	vec_t  dir1;
+	vec_t  dir2;
+	int    shape;
 	float  radius;
 	int    samples;
+	int    photons;		/* TODO */
+	float  photon_weight;	/* TODO */
 }ga_light_t;
-ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius, int samples);
+ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius, int samples,int photons, float photon_weight);
 void	ga_light_print(ga_light_t*l);
 
 /*------- MATERIAL --------*/
 enum ga_material_type{
-	GA_MATERIAL_PHONG,
-	GA_MATERIAL_DIFFUSE,
-	GA_MATERIAL_FLAT,
-	GA_MATERIAL_EMIT,
-	GA_MATERIAL_COMB,
-	GA_MATERIAL_BLENDING
+	GA_MATERIAL_COMB,	/* combinaison of different materials */
+	GA_MATERIAL_BLENDING,	/* blends a child material */
+	GA_MATERIAL_SINGLE	/* Diffuse/spec/reflect/etc.  material*/
 };
 typedef struct ga_material_s{
 	char name[STRING_LENGTH];
 	int type;	/* type of material */ 
-	float power;
-	float alpha;
+	/* BASE PROP */
+	vec_t diff_color;		/* diffuse color*/
+	float diff_factor;	/* diffuse intensity */
+	vec_t spec_color;	/* specular color*/
+	float spec_power;
+	float spec_factor;
+	float emit_factor;
+	vec_t emit_color;
+	float flat_factor;
+	vec_t flat_color;
+	/* BLENDING & LIN COMB*/
+	float blend_factor;
 	ga_list_t *comb;
 	struct ga_material_s *child;
-	vec_t color;	/* color of the material. w is intensity */
+	/* TRANSPARENCY / REFLECTIONS */
+	float ior;
+	float transp_factor;
+	float ref_factor;
+	float ref_fresnel;
+	float soft_ref_angle;
+	int   soft_ref_sample;
+	/* AMBIANT OCCULSION */
+	int   ao_sample;
+	float ao_factor;
+	float ao_min_dist;
+	float ao_max_dist;
+	vec_t ao_min_color;
+	vec_t ao_max_color;
+	/* GLOBAL ILLUMINATION */
+	int   gi_sample;	
+	float gi_factor;
 }ga_material_t;
+ga_material_t *ga_material_new_full(char *name);
 ga_material_t *ga_material_new_diffuse(char *name, vec_t color);
 ga_material_t *ga_material_new_phong(char *name, vec_t color,float power);
 ga_material_t *ga_material_new_blending(char *name, float alpha, ga_material_t *mat);
 ga_material_t *ga_material_new_comb(char *name);
-ga_material_t *ga_material_new_flat(char *name,vec_t color);
-ga_material_t *ga_material_new_emit(char *name,vec_t color);
 void	ga_material_add_comb(ga_material_t *mat, ga_material_t *comb);
 void	ga_material_print(ga_material_t *m);
 
@@ -132,6 +160,8 @@ typedef struct ga_scene_s{
 	ga_transform_t *transform;	/* base transform */
 	ga_image_t *img;		/* output image */
 	ga_kdn_t   *kdtree;
+	ga_photonmap_t *pm;
+	int pm_resolution;		/* TODO */
 	vec_t box_min;
 	vec_t box_max;
 	int samples;
@@ -140,6 +170,7 @@ typedef struct ga_scene_s{
 ga_scene_t *ga_scene_new(char *name);
 void ga_scene_set_sampling(ga_scene_t *s, int samples);
 void ga_scene_set_dithering(ga_scene_t *s, float dither);
+void ga_scene_set_pm_resolution(ga_scene_t *s, int resolution);
 /**
  * Sets the image rendering size.
  */

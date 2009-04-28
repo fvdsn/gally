@@ -6,7 +6,8 @@
 #include "ga_raytrace.h"
 #include "ga_img.h"
 #include "ga_kdt.h"
-static  float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
+
+float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 	float u = 0.0f;
 	float v = 0.0f;
 	float t = FLT_MAX;
@@ -17,151 +18,73 @@ static  float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir){
 		return FLT_MAX;
 	}
 }
-static void ga_material_shade(	vec_t *color, 
-				const vec_t *pos,
-				const vec_t *dir, 
-				const vec_t *norm, 
-				const vec_t *ldir, 
-				const vec_t *lcol,
-				const vec_t *uv,
-				const ga_material_t *mat,
-				float intensity){
-	float fact = 0.0f;
-	float power = 0.0f;
-	vec_t tmp_color = vec_new(0,0,0,1);
-	ga_node_t *n;
-	ga_material_t *comb;
-	vec_t r;
-	switch(mat->type){
-		case GA_MATERIAL_PHONG:
-			r = vec_sub(
-				vec_scale(2.0,vec_scale(vec_dot(*norm,*ldir),*norm)),
-				*ldir);	
-			if((fact = vec_dot(r,vec_neg(*dir))) > 0.0f){
-				power = powf(fact,mat->power);
-				*color = vec_add(*color,
-					vec_scale( power*intensity,
-						vec_mult(mat->color,*lcol)));
-			}
-			break;
-		case GA_MATERIAL_DIFFUSE:
-			if((fact = vec_dot(*norm,*ldir)) > 0.0f){
-				*color = vec_add(*color,
-					vec_scale(fact*intensity,vec_mult(mat->color,*lcol)));
-			}
-			break;
-		case GA_MATERIAL_EMIT:
-			*color = vec_add(*color,vec_scale(intensity,mat->color));
-			break;
-		case GA_MATERIAL_FLAT:
-			*color = vec_add(*color,vec_scale(intensity,vec_mult(mat->color,*lcol)));
-			break;
-		case GA_MATERIAL_BLENDING:
-			ga_material_shade(&tmp_color,pos,dir,norm,ldir,lcol,uv,mat->child,intensity);
-			*color = vec_add(*color,vec_scale(mat->alpha*intensity,tmp_color));
-			break;
-		case GA_MATERIAL_COMB:
-			n = mat->comb->first;
-			while(n){
-				comb = (ga_material_t*)n->data;
-				ga_material_shade(color,pos,dir,norm,ldir,lcol,uv,comb,intensity);
-				n = n->next;
-			}
-			break;
-		default:break;
-	}
-}
-/**
- * Returns the shading color from ray intersection point at pos, view point is
- * from dir, intersection normal is at norm, surface material is mat, scene is
- * s
- */
-
-static vec_t ga_ray_shade(vec_t pos, vec_t dir, vec_t norm,const ga_material_t *mat,const ga_scene_t *s){
+void ga_ray_gi_compute(ga_scene_t *s){
 	ga_node_t *n = s->light->first;
-	ga_light_t *light;
-	vec_t ldir;
-	vec_t color = vec_new(0,0,0,1);
-	vec_t uv = vec_new(0,0,0,1);
-	vec_t lcolor = vec_new(0,0,0,1);
-	vec_t lsample,d1,d2;
-	int sample;
-	float fact;
-	float len;
-	float rlen;
-	dir = vec_norm(dir);
-	if(n){	/*if there is a lamp in the scene*/ 
-		while(n){
-			pos = vec_add(pos,vec_scale(0.00001,norm));
-			light = (ga_light_t*)n->data;
-			sample = light->samples;
-			lsample = light->pos;
-			ldir = vec_sub(light->pos,pos);
-			vec_fperp(&ldir,&d1,&d2);
-			while(sample--){
-				do{
-					lsample = vec_add(
-							vec_scale((-1.0f + 2.0f*random()*RAND_NORM)*light->radius,d1),
-							vec_scale((-1.0f + 2.0f*random()*RAND_NORM)*light->radius,d2));
-				}while(vec_len(lsample) > light->radius + 0.000001);
-				lsample = vec_add(light->pos,lsample);
-
-				
-				
-				ldir = vec_norm(vec_sub(lsample,pos));
-				len = vec_len(vec_sub(light->pos,pos));
-				rlen = ga_ray_length(s,pos,ldir);
-				if(len < rlen){
-					len *= len;
-					len = 1.0/len;
-					lcolor = vec_scale(len*light->color.w,light->color);
-					ga_material_shade(	&color,
-									&pos,
-									&dir,
-									&norm,
-									&ldir,
-									&(lcolor),
-									&uv,
-									mat,
-									1.0f/light->samples);
-				}
-			}
-			n = n->next;
+	ga_light_t *l;
+	int photons;
+	vec_t dir,pos,color;
+	s->pm = ga_photonmap_new(s->box_min,s->box_max,s->bg_color,s->pm_resolution);
+	while(n){
+		l = (ga_light_t*)n->data;
+		photons = l->photons;
+		printf("Light : %s, photons:%d \n",l->name,photons);
+		while(photons--){
+			dir.x = (2.0f*random()*RAND_NORM) - 1.0f;
+			dir.y = (2.0f*random()*RAND_NORM) - 1.0f;
+			dir.z = (2.0f*random()*RAND_NORM) - 1.0f;
+			dir.w = 1;
+			vec_fnorm(&dir);
+			color = ga_ray_trace(s,l->pos,dir,1,0,&pos);
+			ga_photonmap_add(s->pm,pos,vec_scale(l->photon_weight,color));
 		}
-		return color;
-	}else{	/* there is no light in the scene so we draw a default shading */
-		fact = -vec_dot(norm,dir);
-		if(fact < 0.0f){ fact = 0.0f; }
-		return vec_scale(fact,mat->color);
+		n = n->next;
 	}
 }
+
 /**
  * Returns the color from launching a ray at start in direction dir, in scene
  * s
  */
-vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir){
+vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir,float importance,int max_rec, vec_t *dpos){
 	tri_t *tri  = NULL;
 	float t = 0.0f;
 	float u = 0.0f;
 	float v = 0.0f;
-	float ab = 0.0f;
-	int   nnode = 0;
 	vec_t normal;
 	vec_t pos;
-	vec_t ret;
 	dir = vec_norm(dir);
+	if(max_rec < 0){
+		return s->bg_color;
+	}
 	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,start,dir,
 				&tri,&u,&v,&t)){
 		normal = vec_add(vec_scale(u,tri->vnorm[1]),
 			 vec_add(vec_scale(v,tri->vnorm[2]),
 				vec_scale(1.0f-u-v,tri->vnorm[0])));
 		pos = vec_add(start,vec_scale(t,dir));
-		return ga_ray_shade( pos,dir,normal,(ga_material_t*)tri->material,s );
+		if(dpos){
+			*dpos = pos;
+		}
+		return ga_ray_shade( &pos,&dir,&normal,(ga_material_t*)tri->material,s,importance,max_rec);
 	}
-	ret = s->bg_color;
-	ret.x += ab*0.05;
-	ret.z += nnode/255.0f;
-	return ret;
+	if(dpos){
+		*dpos = vec_new(FLT_MAX,FLT_MAX,FLT_MAX,1);
+	}
+	return s->bg_color;
+}
+static vec_t ga_ray_trace_photonmap(const ga_scene_t *s, vec_t start, vec_t dir){
+	tri_t *tri  = NULL;
+	float t = 0.0f;
+	float u = 0.0f;
+	float v = 0.0f;
+	vec_t pos;
+	dir = vec_norm(dir);
+	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,start,dir,
+				&tri,&u,&v,&t)){
+		pos = vec_add(start,vec_scale(t,dir));
+		return ga_photonmap_get(s->pm,pos);
+	}
+	return s->bg_color;
 }
 /* render a part of the render image to the scene output buffer.
  * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
@@ -173,6 +96,7 @@ static void *ga_ray_thread_func(void *data){
 	int px,py;
 	float fx,fy;
 	vec_t color;
+	float importance = 1.0/(td->samples*td->samples);
 	while(x < td->sx){
 		y = td->py;
 		if((x%(10*GA_THREAD_COUNT)) == 0){
@@ -194,8 +118,9 @@ static void *ga_ray_thread_func(void *data){
 								vec_scale(1.0-fy,td->cu)))));
 					/*accumulate samples*/
 					color = vec_add(color,
-						vec_scale(1.0f/(td->samples*td->samples),
-						ga_ray_trace(td->scene,td->origin,dir)));
+						vec_scale(importance,
+						ga_ray_trace(td->scene,td->origin,dir,importance,10,NULL)));
+					      	/*ga_ray_trace_photonmap(td->scene,td->origin,dir)));*/
 					py++;
 				}
 				px++;

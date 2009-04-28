@@ -8,9 +8,9 @@
    
    <Lights>
       <!--<PointLight position="0 5 0" intensity="10" radius="0.5" samples="4" color="1 1 1" name="light0" />-->
-      <PointLight position="-1 3 -1" intensity="20" radius="0.5" samples="4" color="1 0 0" name="light1" />
-      <PointLight position="0 3 0" intensity="20" radius="0.5" samples="4" color="0 1 0" name="light1" />
-      <PointLight position="1 3 1" intensity="20" radius="0.5" samples="4" color="0 0 1" name="light1" />
+      <PointLight position="-2.5 3 -1" intensity="70" radius="0.5" samples="4" color="1 0 0" photons="160000" photon_weight="0.2" name="light1" />
+      <PointLight position="0 3 0" intensity="20" radius="0.5" samples="5" color="0.3 0.3 0.3" photons="160000"   photon_weight="0.2" name="lig" />
+      <PointLight position="1 3 1" intensity="20" radius="0.5" samples="4" color="0.3 0.3 0.3" photons="160000"   photon_weight="0.2" name="light3" />
    </Lights>
    
    <Geometry>
@@ -23,13 +23,28 @@
    </Geometry>
    
    <Materials>
-      <DiffuseMaterial color="0.3 0.3 0.3" name="dif0"/>      
+      <!--<DiffuseMaterial color="0.3 0.3 0.3" name="dif0"/>      
+      <FlatMaterial color="0.3 0.3 0.3" name="flat0"/>      
       <DiffuseMaterial color="0.9 0.0 0.9" name="dif1"/>      
       <PhongMaterial color="0.5 0.5 0.5" shininess="4" name="phong0" />
       <LinearCombinedMaterial
       	material1="dif0" weight1="1"
 	material2="phong0" weight2="0.2"
-	name="mat0" />
+	material3="flat0"  weight3="0.2"
+	name="mat0" />-->
+      <FullMaterial
+	      name="mat0"
+	      diff_color="0.3 0.3 0.3"
+	      diff_factor="1"
+	      ao_factor="0"
+	      ao_sample = "8"
+	      ao_min_dist="0.01"
+	      ao_max_dist="1"
+	      ao_min_color="0 0 0.1"
+	      ao_max_color="0.5  0.5  0.4"
+	      gi_factor = "1"
+	      gi_sample = "32"
+	      />
    </Materials>
    
    <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1">

@@ -4,6 +4,7 @@
 #include <error.h>
 #include <math.h>
 #include "ga_math.h"
+#define EPSILON 0.00001
 
 vec_t vec_new(float x, float y, float z, float w){
 	vec_t v;
@@ -155,19 +156,22 @@ void  vec_fperp(const vec_t *a, vec_t *p1, vec_t *p2){
 	p1->x = a->x;
 	p1->y = a->y;
 	p1->z = a->z;
-	if(p1->x != 0.0f){
+	if(p1->x < -EPSILON || p1->x > EPSILON){
 		p1->x = -p1->x;
-	}else if(p1->y != 0.0f){
+	}else if(p1->y < -EPSILON || p1->y > EPSILON){
 		p1->y = -p1->y;
-	}else if(p1->z != 0.0f){
+	}else if(p1->z < -EPSILON || p1->z > EPSILON){
 		p1->z = -p1->z;
 	}else{
 		p1->x = 1.0f;
 	}
-	vec_fcross(p2,a,p1);
-	vec_fnorm(p2);
+	p2->x = p1->z;
+	p2->y = p1->x;
+	p2->z = p1->y;
 	vec_fcross(p1,a,p2);
 	vec_fnorm(p1);
+	vec_fcross(p2,a,p1);
+	vec_fnorm(p2);
 }
 inline void vec_fnorm(vec_t *a){
 	float n = sqrtf(a->x*a->x + a->y*a->y + a->z*a->z);
@@ -188,6 +192,11 @@ inline void  vec_fscale(float f, vec_t *a){
 	a->y*=f;
 	a->z*=f;
 }
+inline void  vec_ffadd(vec_t *a, float f, const vec_t *b){
+	a->x += f*b->x;
+	a->y += f*b->y;
+	a->z += f*b->z;
+}
 inline void  vec_fmin(vec_t *a, const vec_t *b){
 	if(a->x > b->x){ a->x = b->x; }
 	if(a->y > b->y){ a->y = b->y; }
@@ -203,6 +212,9 @@ inline float vec_fdot(const vec_t *a, const vec_t *b){
 }
 inline float vec_fidx(const vec_t *a, int i){
 	return ((float*)a)[i];
+}
+inline int vec_fzero(const vec_t *a){
+	return (a->x == 0.0f && a->y == 0.0f && a->z == 0.0f);
 }
 
 #define V_I(v,i)    ((float*)(&v))[i]

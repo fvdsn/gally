@@ -49,6 +49,8 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 	vec_t color 	= vec_new(1,1,1,1);
 	float radius	= 0.0f;
 	int   samples   = 1;
+	int   photons   = 0;
+	float photon_weight = 1.0f;
 	float intensity	= 1.0f;
 	char * name	= "unnamed_point_light";
 	while(a){
@@ -62,6 +64,10 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 			radius = (float)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"samples")){
 			samples = (int)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"photons")){
+			photons = (int)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"photon_weight")){
+			photon_weight = (float)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
 			name	 = (char*)a->children->content;
 		}else{
@@ -70,7 +76,8 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 		a = a->next;
 	}
 	color.w = intensity;
-	ga_scene_add_light(s,ga_light_new(name,position,color,radius,samples));
+	ga_scene_add_light(s,ga_light_new(name,position,color,radius,samples,
+				photons,photon_weight));
 }
 static void ga_obj_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
@@ -130,11 +137,74 @@ static void ga_phongmaterial_explore(xmlNodePtr n, ga_scene_t *s){
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"shininess")){
 			power = (float)strtod((char*)a->children->content,NULL);
 		}else{
-			fprintf(stderr,"WARNING: unimplemented phong material property '%s' \n",(const char*)a->name);
+			fprintf(stderr,"WARNING: unknown phong material property '%s' \n",(const char*)a->name);
 		}
 		a = a->next;
 	}
 	ga_scene_add_material(s,ga_material_new_phong(name,color,power));
+}
+static void ga_fullmaterial_explore(xmlNodePtr n, ga_scene_t *s){
+	xmlAttrPtr a 	= n->properties;
+	ga_material_t *m = ga_material_new_full("unnamed_material");
+	while(a){
+		/* BASE PROP */
+		if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
+			strncpy(m->name,(char*)a->children->content,STRING_LENGTH);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"diff_color")){
+			m->diff_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"spec_color")){
+			m->spec_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"emit_color")){
+			m->emit_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"flat_color")){
+			m->flat_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_min_color")){
+			m->ao_min_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_max_color")){
+			m->ao_max_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"diff_factor")){
+			m->diff_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"spec_factor")){
+			m->spec_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"spec_power")){
+			m->spec_power = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"emit_factor")){
+			m->emit_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"flat_factor")){
+			m->flat_factor = (float)strtod((char*)a->children->content,NULL);
+		/* TRANSPARENCY / REFLECTIONS */
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ior")){
+			m->ior = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"transp_factor")){
+			m->transp_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ref_factor")){
+			m->ref_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ref_fresnel")){
+			m->ref_fresnel = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"soft_ref_angle")){
+			m->soft_ref_angle = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"soft_ref_sample")){
+			m->soft_ref_sample = (int)strtod((char*)a->children->content,NULL);
+		/* AMBIANT OCCLUSION */
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_factor")){
+			m->ao_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_sample")){
+			m->ao_sample = (int)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_min_dist")){
+			m->ao_min_dist = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_max_dist")){
+			m->ao_max_dist = (float)strtod((char*)a->children->content,NULL);
+		/* GLOBAL ILLUMINATION */
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"gi_factor")){
+			m->gi_factor = (float)strtod((char*)a->children->content,NULL);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"gi_sample")){
+			m->gi_sample = (int)strtod((char*)a->children->content,NULL);	
+		}else{
+			fprintf(stderr,"WARNING: unimplemented full material property '%s' \n",(const char*)a->name);
+		}
+		a = a->next;
+	}
+	ga_scene_add_material(s,m);
 }
 static void ga_combmaterial_explore(xmlNodePtr n, ga_scene_t *s){
 	xmlAttrPtr a 	= n->properties;
@@ -188,38 +258,6 @@ static void ga_combmaterial_explore(xmlNodePtr n, ga_scene_t *s){
 		fprintf(stderr,"WARNING: weight index doesn't match material index : %d, %d \n",
 				comb_weight_count,comb_material_count);
 	}
-}
-static void ga_flatmaterial_explore(xmlNodePtr n, ga_scene_t *s){
-	xmlAttrPtr a 	= n->properties;
-	vec_t color 	= vec_new(1,1,1,1);
-	char * name	= "unnamed_flat_material";
-	while(a){
-		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
-			color	 = vec_parse((char*)a->children->content);
-		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
-			name	 = (char*)a->children->content;
-		}else{
-			fprintf(stderr,"WARNING: unimplemented flat material property '%s' \n",(const char*)a->name);
-		}
-		a = a->next;
-	}
-	ga_scene_add_material(s,ga_material_new_flat(name,color));
-}
-static void ga_emitmaterial_explore(xmlNodePtr n, ga_scene_t *s){
-	xmlAttrPtr a 	= n->properties;
-	vec_t color 	= vec_new(1,1,1,1);
-	char * name	= "unnamed_phong_material";
-	while(a){
-		if(!xmlStrcmp(a->name,(const xmlChar*)"color")){
-			color	 = vec_parse((char*)a->children->content);
-		}else if(!xmlStrcmp(a->name,(const xmlChar*)"name")){
-			name	 = (char*)a->children->content;
-		}else{
-			fprintf(stderr,"WARNING: unimplemented emit material property '%s' \n",(const char*)a->name);
-		}
-		a = a->next;
-	}
-	ga_scene_add_material(s,ga_material_new_emit(name,color));
 }
 /**
  * Parse a 'Shape' xml tag, checks that geometry and material attributes
@@ -342,12 +380,10 @@ static void ga_xml_explore(xmlNodePtr n, ga_scene_t *s){
 				ga_diffusematerial_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"PhongMaterial")){
 				ga_phongmaterial_explore(n,s);
-			}else if(!xmlStrcmp(n->name,(const xmlChar*)"FlatMaterial")){
-				ga_flatmaterial_explore(n,s);
+			}else if(!xmlStrcmp(n->name,(const xmlChar*)"FullMaterial")){
+				ga_fullmaterial_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"LinearCombinedMaterial")){
 				ga_combmaterial_explore(n,s);
-			}else if(!xmlStrcmp(n->name,(const xmlChar*)"EmitMaterial")){
-				ga_emitmaterial_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Obj")){
 				ga_obj_explore(n,s);
 			}else if(!xmlStrcmp(n->name,(const xmlChar*)"Scene")){

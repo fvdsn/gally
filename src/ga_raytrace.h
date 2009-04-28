@@ -25,8 +25,17 @@ typedef struct ga_ray_thread_data_s{
 /* checks for intersection and barycentric coordinates */
 int   ga_ray_intersect(const tri_t *tr, const vec_t *start, const vec_t* dir,float *t, float*u,float*v);
 /* returns the color of a raytrace */
-vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir);
+vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir,float importance,int max_rec,vec_t *pos);
 /* renders a scene to s->img by raytracing it */
 void  ga_ray_render(ga_scene_t *s);
+float ga_ray_length(const ga_scene_t *s,vec_t origin,vec_t dir);
+void ga_ray_gi_compute(ga_scene_t *s);
+vec_t ga_ray_shade(	const vec_t *pos, 
+			const vec_t *dir, 
+			const vec_t *norm,
+			const ga_material_t *mat,
+			const ga_scene_t *s,
+			float importance, 
+			int max_rec);
 
 #endif

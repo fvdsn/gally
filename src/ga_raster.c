@@ -99,13 +99,13 @@ static vec_t ga_raster_shade(vec_t pos, vec_t norm, ga_material_t *mat,ga_scene_
 			light = (ga_light_t*)n->data;
 			vl = vec_norm(vec_sub(light->pos,pos));
 			if((fact = vec_dot(norm,vl)) > 0.0f){
-				color = vec_add(color,vec_scale(fact,vec_mult(mat->color,light->color)));
+				color = vec_add(color,vec_scale(fact,vec_mult(mat->diff_color,light->color)));
 			}
 			n = n->next;
 		}
 		return color;
 	}else{
-		return mat->color;
+		return mat->diff_color;
 	}
 }
 /*computes the camera view transform matrix*/

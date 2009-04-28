@@ -20,13 +20,15 @@ void  ga_cam_print(ga_cam_t*c){
 			c->up.x,  c->up.y,  c->up.z,
 			c->fov, c->name);
 }
-ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius,int samples){
+ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius,int samples,int photons, float photon_weight){
 	ga_light_t*l = (ga_light_t*)malloc(sizeof(ga_light_t));
 	strncpy(l->name,name,STRING_LENGTH);
 	l->pos   = pos;
 	l->color = color;
 	l->radius = radius;
 	l->samples = samples;
+	l->photons = photons;
+	l->photon_weight = photon_weight;
 	return l;
 }
 void	ga_light_print(ga_light_t*l){
@@ -44,21 +46,28 @@ static ga_material_t *ga_material_new(char *name){
 }
 ga_material_t *ga_material_new_diffuse(char *name, vec_t color){
 	ga_material_t*m = ga_material_new(name);
-	m->type = GA_MATERIAL_DIFFUSE;
-	m->color = color;
+	m->type = GA_MATERIAL_SINGLE;
+	m->diff_color = color;
+	m->diff_factor = 1.0f;
+	return m;
+}
+ga_material_t *ga_material_new_full(char *name){
+	ga_material_t*m = ga_material_new(name);
+	m->type = GA_MATERIAL_SINGLE;
 	return m;
 }
 ga_material_t *ga_material_new_phong(char *name, vec_t color, float power){
 	ga_material_t*m = ga_material_new(name);
-	m->type = GA_MATERIAL_PHONG;
-	m->color = color;
-	m->power = power;
+	m->type = GA_MATERIAL_SINGLE;
+	m->spec_color = color;
+	m->spec_power = power;
+	m->spec_factor = 1.0f;
 	return m;
 }
 ga_material_t *ga_material_new_blending(char *name, float alpha, ga_material_t *c){
 	ga_material_t*m = ga_material_new(name);
 	m->type = GA_MATERIAL_BLENDING;
-	m->alpha = alpha;
+	m->blend_factor = alpha;
 	m->child = c;
 	return m;
 }	
@@ -68,32 +77,12 @@ ga_material_t *ga_material_new_comb(char *name){
 	m->comb = ga_list_new();
 	return m;
 }
-ga_material_t *ga_material_new_flat(char *name,vec_t color){
-	ga_material_t *m = ga_material_new(name);
-	m->type = GA_MATERIAL_FLAT;
-	m->color = color;
-	return m;
-}
-ga_material_t *ga_material_new_emit(char *name,vec_t color){
-	ga_material_t *m = ga_material_new(name);
-	m->type = GA_MATERIAL_EMIT;
-	m->color = color;
-	return m;
-}
 void	ga_material_add_comb(ga_material_t *mat, ga_material_t *comb){
 	ga_list_add(mat->comb,comb);
 }
 
 void	ga_material_print(ga_material_t *m){
-	switch(m->type){
-		case GA_MATERIAL_DIFFUSE:
-			printf("<DiffuseMaterial color='%f %f %f' name='%s' />\n",
-					m->color.x, m->color.y, m->color.z,
-					m->name);
-			break;
-		default:
-			printf("<UnknownKindMaterial />\n");
-	}
+	printf("<Material />");
 }
 ga_geom_t *ga_geom_new_model(char *name, model_t *m){
 	ga_geom_t*g = (ga_geom_t*)malloc(sizeof(ga_geom_t));
@@ -215,6 +204,9 @@ void ga_scene_set_sampling(ga_scene_t *s, int samples){
 }
 void ga_scene_set_dithering(ga_scene_t *s, float dither){
 	s->dither = dither;
+}
+void ga_scene_set_pm_resolution(ga_scene_t *s, int resolution){
+	s->pm_resolution = resolution;
 }
 void ga_scene_save_image(ga_scene_t *s,char *path){
 	ga_image_save(s->img,path);

@@ -24,6 +24,7 @@ int main(int argc, char **argv){
 	int 	sizey = 512;
 	int	raytrace = 1;
 	int	samples  = 1;
+	int 	pm_res   = 50;
 	float   dither = 0.0f;
 	ga_scene_t *s = NULL;
 	int i = argc;
@@ -56,6 +57,13 @@ int main(int argc, char **argv){
 			}else if (samples > 8){
 				fprintf(stderr,"WARNING: very high sampling:%d, render will be slow\n",samples);
 			}
+		}else if(!strncmp(argv[i],"-photonmap=",11)){
+			pm_res = (int)strtol(argv[i]+11,NULL,10);
+			if(pm_res <= 0){
+				fprintf(stderr,"WARNING: invalid photonmap resolution:%d, set to default(50)\n",samples);
+			}else if (samples > 500){
+				fprintf(stderr,"WARNING: very high photonmap resolution:%d, render will be slow\n",samples);
+			}
 		}else if(!strncmp(argv[i],"-dither=",8)){
 			dither = (float)strtod(argv[i]+8,NULL);
 			if(dither < 0.0f || dither > 1.0f){
@@ -83,6 +91,7 @@ int main(int argc, char **argv){
 	ga_scene_set_image(s,sizex,sizey);
 	ga_scene_set_sampling(s,samples);
 	ga_scene_set_dithering(s,dither);
+	ga_scene_set_pm_resolution(s,pm_res);
 	if(raytrace){
 		printf("Applying scene graph transforms\n");
 		ga_scene_build_triangle(s);
@@ -92,8 +101,8 @@ int main(int argc, char **argv){
 		vec_print(s->box_max);
 		printf("Building KD-Tree\n");
 		ga_scene_build_kdtree(s);
-		printf("Printing KD-Tree\n");
-		/*ga_kdtree_print(s->kdtree,0);*/
+		printf("Rendering Photon Pass ... \n");
+		ga_ray_gi_compute(s);
 		printf("Rendering pixel collumn ...\n");
 		ga_ray_render(s);
 		printf("Done\n");

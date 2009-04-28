@@ -29,6 +29,7 @@ static char float_to_char(float v){
 	}
 }
 void	ga_image_set_pixel(ga_image_t *i, int x, int y, vec_t color){
+	color = vec_max(vec_min(color,vec_new(1,1,1,1)),vec_new(0,0,0,0));
 	i->pixel[i->sizex*(i->sizey-y -1) + x] = color;
 }
 void	ga_image_set_zpixel(ga_image_t *i, int x, int y, float z, vec_t color){
