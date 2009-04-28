@@ -159,6 +159,7 @@ typedef struct stack_elem_s{
 	vec_t pb;	/*entry/exit point*/
 	int   prev;	/*pointer to previous stack element*/
 }stack_elem_t;
+/*
 #define KDN_LEFT(kdn) (kdn)->left
 #define KDN_RIGHT(kdn) (kdn)->right
 #define KDN_IS_LEAF(kdn) ga_kdn_is_leaf(kdn)
@@ -269,7 +270,7 @@ int ga_kdn_trace_fast(	ga_kdn_t *root,
 		expt = stack[enpt].prev;
 	}
 	return 0;
-}
+}*/
 	
 		
 

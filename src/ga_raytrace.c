@@ -102,21 +102,6 @@ vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir,float importance,
 	}
 	return s->bg_color;
 }
-/*
-static vec_t ga_ray_trace_photonmap(const ga_scene_t *s, vec_t start, vec_t dir){
-	tri_t *tri  = NULL;
-	float t = 0.0f;
-	float u = 0.0f;
-	float v = 0.0f;
-	vec_t pos;
-	dir = vec_norm(dir);
-	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,start,dir,
-				&tri,&u,&v,&t)){
-		pos = vec_add(start,vec_scale(t,dir));
-		return ga_photonmap_get(s->pm,pos);
-	}
-	return s->bg_color;
-}*/
 /* render a part of the render image to the scene output buffer.
  * see ga_ray_thread_data_t def in ga_raytrace.h for further indications */
 static void *ga_ray_thread_func(void *data){

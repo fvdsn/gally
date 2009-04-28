@@ -48,10 +48,16 @@ typedef struct ga_light_s{
 	int    shape;
 	float  radius;
 	int    samples;
-	int    photons;		/* TODO */
-	float  photon_weight;	/* TODO */
+	int    photons;		
+	float  photon_weight;	
 }ga_light_t;
-ga_light_t *ga_light_new(char *name, vec_t pos, vec_t color,float radius, int samples,int photons, float photon_weight);
+ga_light_t *ga_light_new(	char *name, 
+				vec_t pos, 
+				vec_t color,
+				float radius, 
+				int samples,
+				int photons, 
+				float photon_weight	);
 void	ga_light_print(ga_light_t*l);
 
 /*------- MATERIAL --------*/
@@ -64,37 +70,42 @@ typedef struct ga_material_s{
 	char name[STRING_LENGTH];
 	int type;	/* type of material */ 
 	/* BASE PROP */
-	vec_t diff_color;		/* diffuse color*/
+	vec_t diff_color;	/* diffuse color*/
 	float diff_factor;	/* diffuse intensity */
-	vec_t spec_color;	/* specular color*/
-	float spec_power;
-	float spec_factor;
-	float emit_factor;
-	vec_t emit_color;
-	float flat_factor;
-	vec_t flat_color;
+	vec_t spec_color;	/* specular color */
+	float spec_power;	/* shininess	*/
+	float spec_factor;	/* spec intensity */
+	float emit_factor;	/* emit intensity */
+	vec_t emit_color;	/* emit color */
+	float flat_factor;	/* flat intensity */
+	vec_t flat_color;	/* flat color */
+
 	/* BLENDING & LIN COMB*/
-	float blend_factor;
-	ga_list_t *comb;
-	struct ga_material_s *child;
+	float blend_factor;	/* child intensity */
+	ga_list_t *comb;	/* list of components */
+	struct ga_material_s *child;	/*child for blending */
+
 	/* TRANSPARENCY / REFLECTIONS */
-	float ior;
-	float transp_factor;
-	float ref_factor;
-	float ref_fresnel;
-	float soft_ref_angle;
-	int   soft_ref_sample;
+	float ior;		/* index of refraction */
+	float transp_factor;	/* transparency intensity */
+	float ref_factor;	/* reflection intensity */
+	float ref_fresnel;	/* fresnel effect [0,1] */
+	float soft_ref_angle;	/* [0,1] -> 1.0 = 45deg */
+	int   soft_ref_sample;	/* samples used for reflection */
+
 	/* AMBIANT OCCULSION */
-	int   ao_sample;
-	float ao_factor;
-	float ao_min_dist;
-	float ao_max_dist;
-	vec_t ao_min_color;
-	vec_t ao_max_color;
+	int   ao_sample;	/* secondary rays for ao */	
+	float ao_factor;	/* ao intensity */
+	float ao_min_dist;	/* below it's fully occluded */
+	float ao_max_dist;	/* after it's fully open */
+	vec_t ao_min_color;	/* occluded color */
+	vec_t ao_max_color;	/* open color */
+
 	/* GLOBAL ILLUMINATION */
-	int   gi_sample;	
-	float gi_factor;
+	int   gi_sample;	/* sky color samples */	
+	float gi_factor;	/* gi intensity */
 }ga_material_t;
+
 ga_material_t *ga_material_new_full(char *name);
 ga_material_t *ga_material_new_diffuse(char *name, vec_t color);
 ga_material_t *ga_material_new_phong(char *name, vec_t color,float power);
@@ -161,11 +172,11 @@ typedef struct ga_scene_s{
 	ga_image_t *img;		/* output image */
 	ga_kdn_t   *kdtree;
 	ga_photonmap_t *pm;
-	float pm_resolution;		
-	vec_t box_min;
+	float pm_resolution;		/* photon radius */	
+	vec_t box_min;			/* scene bounding box */	
 	vec_t box_max;
-	int samples;
-	float dither;
+	int samples;			/* anti aliasing */
+	float dither;			/* in [0,1] dither factor */
 }ga_scene_t;
 ga_scene_t *ga_scene_new(char *name);
 void ga_scene_set_sampling(ga_scene_t *s, int samples);
