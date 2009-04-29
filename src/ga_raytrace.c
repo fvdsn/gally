@@ -70,7 +70,6 @@ void ga_ray_gi_compute(ga_scene_t *s){
 	}
 }
 
-
 /**
  * Returns the color from launching a ray at start in direction dir, in scene
  * s
@@ -115,6 +114,7 @@ static void *ga_ray_thread_func(void *data){
 	float importance = 1.0/(td->samples*td->samples);
 	while(x < td->sx){
 		y = td->py;
+		/* printing status */
 		if((x%(10*GA_THREAD_COUNT)) == 0){
 			printf("thread %d, line %d\n",td->id,td->sx - x);
 		}
@@ -141,6 +141,7 @@ static void *ga_ray_thread_func(void *data){
 				}
 				px++;
 			}
+			/* dithering */
 			color = vec_add(color,vec_new(
 				((float)random()/(float)RAND_MAX)*td->dither/256.0f,
 				((float)random()/(float)RAND_MAX)*td->dither/256.0f,

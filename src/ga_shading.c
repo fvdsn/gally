@@ -7,13 +7,15 @@
 #include "ga_kdt.h"
 #include "ga_photonmap.h"
 
-
+/* Emit shading */
 static void ga_shade_emit(vec_t *color, const ga_material_t *mat){
 	*color = vec_add(*color,vec_scale(mat->emit_factor,mat->emit_color));
 }
+/* flat shading (doesn't depend on normal) */
 static void ga_shade_flat(vec_t *color, const ga_material_t *mat, const vec_t *lcolor,float factor){
 	*color = vec_add(*color,vec_scale(mat->flat_factor*factor,vec_mult(mat->flat_color,*lcolor)));
 }
+/* diffuse shading */
 static void ga_shade_diffuse(vec_t *color, const ga_material_t *mat,const vec_t *lcolor, const vec_t *ldir, const vec_t *norm, float factor){
 	float fact = vec_dot(*norm,*ldir);
 	if(fact > 0.0f){
@@ -22,6 +24,7 @@ static void ga_shade_diffuse(vec_t *color, const ga_material_t *mat,const vec_t 
 				,vec_mult(mat->diff_color,*lcolor)));
 	}
 }
+/* Computes the phong hilight */
 static void ga_shade_phong(vec_t *color, const ga_material_t *mat,const vec_t *lcolor, const vec_t *ldir, const vec_t *dir, const vec_t *norm, float factor){
 	vec_t r;
 	float fact;
@@ -35,7 +38,7 @@ static void ga_shade_phong(vec_t *color, const ga_material_t *mat,const vec_t *l
 				vec_mult(mat->spec_color,*lcolor)));
 	}
 }
-
+/* Computes ambiant occlusion */
 static void ga_shade_ao(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm, float importance){
 	int sample = mat->ao_sample;
 	float rlen,fact;
@@ -63,7 +66,11 @@ static void ga_shade_ao(vec_t *color, const ga_scene_t *s, const ga_material_t *
 	*color = vec_add(*color,
 			vec_scale(1.0f/mat->ao_sample*mat->ao_factor,ao_color));
 }
-
+/**
+ * Launch a bunch of rays in random directions and see if they hit the sky.
+ * Then we calculate the diffuse shading of the material with those rays as
+ * lights
+ */
 static void ga_shade_sky(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm, float importance){
 	int sample = mat->gi_sample;
 	float rlen;
@@ -83,6 +90,11 @@ static void ga_shade_sky(vec_t *color, const ga_scene_t *s, const ga_material_t 
 	*color = vec_add(*color,
 			vec_scale(1.0f/mat->gi_sample*mat->gi_factor,sky_color));
 }
+/**
+ * Collects the photons within s->pm-resolution radius around pos, 
+ * check if they belong to the same surface (normals are more or less the same )
+ * then add their contributions to the diffuse shading of the material.
+ */
 static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm){
 	float sqradius = s->pm_resolution*s->pm_resolution;
 	vec_t gi_color = vec_new(0,0,0,1);
@@ -105,6 +117,7 @@ static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *
 	*color = vec_add(*color,gi_color);
 			
 }					
+/* Computes metallic reflection */
 static void ga_shade_reflect(vec_t *color,const ga_scene_t *s, const ga_material_t *mat,const vec_t *pos, const vec_t *dir, const vec_t *norm, float importance, int max_rec){
 	vec_t r,d1,d2,dr;
 	vec_t rcolor;
@@ -127,7 +140,7 @@ static void ga_shade_reflect(vec_t *color,const ga_scene_t *s, const ga_material
 	}
 	*color = vec_add(*color,vec_scale(1.0f/sample,rcolor));
 }
-
+/* Computes the color of a ray intersection */
 vec_t ga_ray_shade(	const vec_t * pos, 
 			const vec_t * dir, 
 			const vec_t * norm,
@@ -145,11 +158,15 @@ vec_t ga_ray_shade(	const vec_t * pos,
 	float len;
 	float rlen;
 	/*dir = vec_norm(dir);*/
-	if(mat->type == GA_MATERIAL_BLENDING){
+	if(!mat || !pos || !dir ||!norm || !s){
+		return color;
+	}
+	/* global shading */
+	if(mat->type == GA_MATERIAL_BLENDING && mat->child){
 		return vec_scale(mat->blend_factor,
 		ga_ray_shade(pos,dir,norm,mat->child,s,importance*mat->blend_factor, max_rec));
 	}
-	if(mat->type == GA_MATERIAL_COMB){
+	if(mat->type == GA_MATERIAL_COMB && mat->comb){
 		n = mat->comb->first;
 		while(n){
 			comb = (ga_material_t*)n->data;
@@ -165,15 +182,15 @@ vec_t ga_ray_shade(	const vec_t * pos,
 		ga_shade_emit(&color,mat);
 	}
 	if(mat->ao_factor != 0.0f){
-		ga_shade_ao(&color,s,mat,&dpos,norm,importance && max_rec > 0);
+		ga_shade_ao(&color,s,mat,&dpos,norm,importance);
 	}
-	if(mat->gi_factor != 0.0f && mat->diff_factor != 0.0f && max_rec > 0){
+	if(mat->gi_factor != 0.0f && mat->diff_factor != 0.0f && s->pm){
 		ga_shade_gi(&color,s,mat,&dpos,norm);
 	}
-	if(mat->gi_sample){
+	if(mat->gi_sample > 0){
 		ga_shade_sky(&color,s,mat,&dpos,norm,importance);
 	}
-		
+	/* pointlight shading */	
 	n = s->light->first;
 	if(n && (mat->diff_factor != 0.0f || mat->spec_factor != 0.0f ||
 				mat->flat_factor != 0.0f )){
