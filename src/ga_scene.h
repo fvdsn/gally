@@ -41,15 +41,14 @@ void	  ga_cam_print(ga_cam_t*c);
 /*------- LIGHT --------*/
 typedef struct ga_light_s{
 	char name[STRING_LENGTH];
-	vec_t  pos;	/* light position */
-	vec_t  color; 	/*.w = intensity */
-	vec_t  dir1;
+	vec_t  pos;		/* light position */
+	vec_t  color; 		/*.w = intensity */
+	vec_t  dir1;		/* TODO for area lights */
 	vec_t  dir2;
-	int    shape;
-	float  radius;
-	int    samples;
-	int    photons;		
-	float  photon_weight;	
+	float  radius;  	/* radius of the lamp */
+	int    samples; 	/* count of samples for soft shadows */
+	int    photons;		/* number of photons to launch */	
+	float  photon_weight;	/* intensity of photons */
 }ga_light_t;
 ga_light_t *ga_light_new(	char *name, 
 				vec_t pos, 

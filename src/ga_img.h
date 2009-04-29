@@ -17,7 +17,8 @@ ga_image_t *ga_image_new(int sizex, int sizey);
  */
 void	ga_image_save(ga_image_t *i, char *path);
 /**
- * Set a pixel at coordinate x,y  (0,0)@bottom left
+ * Set a pixel at coordinate x,y  (0,0)@bottom left.
+ * intensities are clipped to [0,1]
  */
 void	ga_image_set_pixel(ga_image_t *i, int x, int y, vec_t color);
 /**
