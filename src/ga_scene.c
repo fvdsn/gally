@@ -205,8 +205,13 @@ void ga_scene_set_sampling(ga_scene_t *s, int samples){
 void ga_scene_set_dithering(ga_scene_t *s, float dither){
 	s->dither = dither;
 }
-void ga_scene_set_pm_resolution(ga_scene_t *s, float resolution){
+void ga_scene_setup_pm(ga_scene_t *s, float resolution,int pm_bounces){
 	s->pm_resolution = resolution;
+	s->pm_bounces = pm_bounces;
+}
+void ga_scene_setup_kdtree(ga_scene_t *s, int max_depth,int min_tri){
+	s->kdtree_max_depth = max_depth;
+	s->kdtree_min_tri   = min_tri;
 }
 void ga_scene_save_image(ga_scene_t *s,char *path){
 	ga_image_save(s->img,path);
@@ -343,6 +348,7 @@ void ga_scene_build_bounding_box(ga_scene_t *s){
 	s->box_max = vec_add(s->box_max,vec_new(0.01,0.01,0.01,0));
 }
 void ga_scene_build_kdtree(ga_scene_t *s){
-	s->kdtree = ga_kdn_octree(s->tri_pool,10,20,0,s->box_min,s->box_max);
+	s->kdtree = ga_kdn_octree(s->tri_pool,s->kdtree_max_depth,
+			s->kdtree_min_tri,0,s->box_min,s->box_max);
 }
 

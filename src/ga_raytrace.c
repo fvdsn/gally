@@ -64,7 +64,9 @@ void ga_ray_gi_compute(ga_scene_t *s){
 			dir.z = (2.0f*random()*RAND_NORM) - 1.0f;
 			dir.w = 1;
 			vec_fnorm(&dir);
-			ga_ray_photon_trace(s,l->pos,dir,vec_scale(1.0f/l->photons*l->color.w*l->photon_weight,l->color),3,1);
+			ga_ray_photon_trace(s,l->pos,dir,
+				vec_scale(1.0f/l->photons*l->color.w*l->photon_weight,l->color),
+				s->pm_bounces,1);
 		}
 		n = n->next;
 	}

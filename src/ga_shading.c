@@ -181,7 +181,7 @@ vec_t ga_ray_shade(	const vec_t * pos,
 	if(mat->emit_factor != 0.0f){
 		ga_shade_emit(&color,mat);
 	}
-	if(mat->ao_factor != 0.0f){
+	if(mat->ao_factor != 0.0f && mat->ao_sample){
 		ga_shade_ao(&color,s,mat,&dpos,norm,importance);
 	}
 	if(mat->gi_factor != 0.0f && mat->diff_factor != 0.0f && s->pm){

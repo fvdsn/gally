@@ -163,7 +163,6 @@ typedef struct ga_scene_s{
 	ga_cam_t *active_camera;	/* the active_camera */
 	ga_list_t *camera;		/* list of camera */
 	ga_list_t *light;		/* list of light */
-	ga_list_t *active_light;	/* list of active light */
 	ga_list_t *material;		/* material list */
 	ga_list_t *geom;		/* geometry list */
 	ga_list_t *shape;		/* shape list */
@@ -171,17 +170,22 @@ typedef struct ga_scene_s{
 	ga_transform_t *transform;	/* base transform */
 	ga_image_t *img;		/* output image */
 	ga_kdn_t   *kdtree;
+	int kdtree_max_depth;		/* maximum depth of the kdtree */
+	int kdtree_min_tri;		/* tris in a kdtree leaf. */
 	ga_photonmap_t *pm;
 	float pm_resolution;		/* photon radius */	
+	int   pm_bounces;		/* photon tracing recursion */
 	vec_t box_min;			/* scene bounding box */	
 	vec_t box_max;
 	int samples;			/* anti aliasing */
 	float dither;			/* in [0,1] dither factor */
 }ga_scene_t;
+
 ga_scene_t *ga_scene_new(char *name);
 void ga_scene_set_sampling(ga_scene_t *s, int samples);
 void ga_scene_set_dithering(ga_scene_t *s, float dither);
-void ga_scene_set_pm_resolution(ga_scene_t *s, float resolution);
+void ga_scene_setup_pm(ga_scene_t *s, float resolution, int pm_bounces);
+void ga_scene_setup_kdtree(ga_scene_t *s, int max_depth, int min_tri);
 /**
  * Sets the image rendering size.
  */

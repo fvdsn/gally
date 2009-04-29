@@ -64,6 +64,7 @@ static void ga_pointlight_explore(xmlNodePtr n, ga_scene_t *s){
 			radius = (float)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"samples")){
 			samples = (int)strtod((char*)a->children->content,NULL);
+			if(samples <= 0){ samples = 1; }
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"photons")){
 			photons = (int)strtod((char*)a->children->content,NULL);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"photon_weight")){

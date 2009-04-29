@@ -22,13 +22,17 @@ USAGE 	:
 		-scene=PATH   : the path to the sdl scene file
 	Optional arguments:
 	"""""""""""""""""""
-		-ray(tracer)  : use the raytracer.  (default method)
-		-ras(teriser) : use the rasteriser. (you can't use both 
-							at the same time)
 		-out=PATH     : path to the png output (default: 'out.png') 
 		-sx=INT       : the horizontal rendering size (default:256)
 		-sy=INT       : the vertical rendering size   (default:256)
-		-h(elp)       : displays this message.\n
+		-h(elp)       : displays this message.
+		-samples=INT  : oversampling (default:2)
+		-dither=FLOAT : dithering [0,1], (default:0.9)
+		-photonmap=FLOAT : photon radius (default:0.2)
+		-bounce=INT   : photon bounces (default: 3)
+		-kdtdepth=INT : kdtree max depth (default: 10 )
+		-kdtleaf=INT  : triangles in kdtree leaves (default: 20)
+		-h(elp)       : displays this message.
 	
 	
 	Sdl file format Modifications : 
@@ -47,23 +51,200 @@ DOCUMENTATION AND ARCHITECTURE :
 	functions. Source files are in the src/ directory.
 
 	ga_math.c	<- Matrix and vectors 
-	ga_geom.c	<- Triangle, Models, Obj file loading. 
-	ga_scene.h	<- scene and scene graph data structure
-	ga_scene.c	<- scene and scene graph data structure implementation
+	ga_geom.c	<- Triangle, Models, Obj file loading, 
+			   Primitive intersection. 
+	ga_scene.h	<- scene and scene graph data structure :
+				- lamps
+				- materials
+				- transforms
+				- scene
+	ga_scene.c	<- scene and scene graph data structure implementation,
+			   scene graph transformation.
 	ga_scene_load.c	<- sdl file loading
 	ga_img.c	<- image, zbuffer, image save
-	ga_raytrace.c	<- raytracer and raytracer shading
-	ga_raster.c	<- rasteriser
+	ga_raytrace.c	<- core rendering, raytracing, creating the photon map.
+	ga_shading.c	<- Shading.
+	ga_kdt.c 	<- kdtree generation and traversal.
+	ga_photonmap.c  <- Photon mapping basic structure and functions.
 	ga_list.c	<- linked list
 	ga_main.c	<- parsing arguments, main function
 
+	The steps used to render are the following.
+	
+	1 Command line parameters 	: ga_main.c
+	2 Load SDL file			: ga_scene_load.c
+	3 Loading obj			: ga_geom.c
+	4 Apply scene graph		: ga_scene.c
+	5 Construct KD-Tree		: ga_kdt.c
+	6 Photon Pass			: ga_raytrace.c
+	7 Render Pass			: ga_raytrace.c
+	8 Image save			: ga_img.c
+
 IMPLEMENTATION NOTES :
 ======================
-	Currently there is no acceleration data structure for the raytracer, so
-	it is much slower than the rasterizer.
-	
-	Object transformations are not taken into account.
 
+	ACCELERATION STRUCTURE :
+	¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
+	the acceleration structure implemented is a KD-Tree. However the algorithm
+	building the KD-Tree builds in fact an Octree as it was found more efficient
+	than KD-Tree without SAH. 
+	
+	The maximum depth of the tree, and the number of triangle before a branch
+	is pruned can be controlled trough command line arguments, but the default
+	values are fine for most purposes.
+
+	OBJECT TRANSFORMATION :
+	¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨¨
+	All the objects triangles are transformed by the scenegraph before they are
+	put into one single triangle pool. That pool is then processed to create
+	a KD-Tree. All Object information has thus been lost in the rendered structures,
+	triangle hold a pointer to their material. 
+	
+	MATERIALS : 
+	¨¨¨¨¨¨¨¨¨¨
+	There are 4 kinds of materials implemented.
+	
+	PhongMaterial and DiffuseMaterial: 
+	Those are basic diffuse and specular materials as specified by the sdl format
+	specification. However their usage is not advised.
+
+	LinearCombinedMaterial:
+	Allows to combine several materials to be combined into one as specified by
+	the Sdl format specifications.
+
+	FullMaterial:
+	This kind of material has access to all the available render feature, and
+	can combine Specularity and diffuse into one single declaration. 
+	Here is the list of all available options and features 
+	
+	NB:
+	- the default value is zero for all vectors and numbers. 
+	- the numeric range given are only for informative purposes. 
+	- if a *_factor is set to zero, the corresponding feature is not
+	  computed. this is the default behaviour
+	- all the effect are computed independantly from each other and
+	  the result is added together. If you want to preserve light energy,
+	  the factors must add to 1.
+	
+		DIFFUSE & SPECULAR :
+			diff_color=<vec>		: the diffuse color.
+			diff_factor=<float>[0,1]	: the intensity of the diffuse shading
+			spec_color=<vec>		: the specular color
+			spec_power=<float>[0,50]	: the specular power / shininess
+			spec_factor=<float>[0,1]	: the intensity of the specularity.
+		EMIT:
+			emit color is color emited by the object, independant of light
+			and direction.
+
+			emit_color<vec>			: the emit light color.
+			emit_factor<float>[0,1]		: the intensity of the emited light
+
+		FLAT:
+			flat shading is just like diffuse shading but it is independant
+			from light direction. 
+
+			flat_color<vec>			: the flat shading color
+			flat_factor<float>[0,1]		: the intensity of flat shading.
+		
+		REFLECTIONS
+			metallic reflections, intensity is constant with incident angle.
+
+			ref_color<vec>			: the color of the reflection. (white for metal)
+			ref_factor<float>[0,1]		: the intensity of reflection.
+			soft_ref_angle<float>[0,1]	: this is the tangent of the soft reflection angle.
+							  0 means hard , 1 means 45 deg angle. 
+			soft_ref_sample<int>[0-8]	: the number of sample used for soft reflections.
+							  0 means 1 sample.
+		AMBIANT OCCLUSION
+			ambiant occlusion takes for each point how close it is from other things.
+			and maps it to a color. For that it takes the average distance from
+			that point to other objects in the scene. 
+			
+			AO is specified by two distances and two colors.
+			if an object is located below the min_distance it is associated to
+			the min_color. if it is further than the max_distance it is
+			associated to the max color. In between a mix of the two colors is used. 
+			Usually the min distance is set small, min_color negative, max distance
+			is big (>1) and the color positive. 
+
+			ao_sample<int>[1-8]	: the number of sample used for AO. 0 is no AO.
+			ao_factor<float>[0,1]   : the intensity of ambiant occlusion.
+			ao_min_dist<float>[0,0.1] : the close distance.
+			ao_max_dist<float>[0.5,9] : the far distance.
+			ao_min_color<vec>	  : the close color.
+			ao_max_color<vec>	  : the far color.
+
+		GLOBAL ILLUMINATION
+			global illumination allows indirect and sky lighting. Indirect
+			lighting is specified by the photons in lamp and the photonmap
+			parameters. sky lighting is specified by the scene background
+			color.
+
+			gi_sample<int>[0-8]	: the number of sample for sky lighting. 
+						  0 -> no sky lighting.
+			gi_factor<float>[0,1]   : the intensity of sky lighting and indirect
+						 lights.
+	LIGHTS:
+	¨¨¨¨¨¨¨
+	Lights intensity decreases with square of distance to be coherent 
+	with photon mapping and physical expectations. The intensity number can thus
+	be pretty high. 
+	
+	Lights can have a radius for soft shadows. 
+	Lights also throw photons for indirect lighting. A number around 200 000 
+	per light gives nice results with default photonmap settings. 
+
+	There is only one kind of light : the point light. 
+
+		PointLight:
+			radius<float>[0,2] 	: the lamp radius for soft shadows
+			samples<int>[1-8]	: the samples for soft shadows
+			photons<int>[100K-10M]	: the number of photon sent
+			photon_weight<float>[1,8]	: to increase the indirect 
+						  lighting intensity.
+	PHOTON MAP:
+	¨¨¨¨¨¨¨¨¨¨¨
+	The photon maps allows to compute efficiently the indirect lighting of the
+	scene. In a first pass all lights shoot photons in random directions.
+	Their intersection with the scene is stored in the photon map.
+	
+	In the full render we can thus estimate the indirect lighting by looking
+	at the photons close to the ray intersection point.
+
+	There two parameters for the photon map given to the command line :
+		-photonmap=<float>[0.05-0.3]	: the radius of the photons.
+					the larger they are, to slower is
+					the render and the less details there is.
+					However, the smaller they are, the higher
+					the noise in the render.
+					for a precise render 0.07 is a good value.
+					If there is still too much noise, you can
+					increase the photons sent by the lights.
+		-bounce=<int>[2-4]	the number of bounces before a photon dies
+					after 4 the photons usually have small
+					energy, so more is useless.
+	
+	The photon map implemented differs from the solution found in the
+	litterature. Usually a balanced kd-tree is used. However to
+	simplify the design this implementation uses a regular grid with
+	cells the size of a photon radius. This makes it a little slower
+	and prevents us from using the photonmap for precise caustics. 
+
+	ANTI ALIASING:
+	¨¨¨¨¨¨¨¨¨¨¨¨¨¨
+	A number of sample can be specified to the renderer to be used per pixel
+	with the -samples= parameter of the command line. The square of this
+	number is the actual sample count used. 
+
+	DITHERING:
+	¨¨¨¨¨¨¨¨¨¨
+	discretisation of the pixel intensities from float to byte can introduce
+	banding. Dithering adds some noise to the process to remove the banding.
+	the argument -dither=<float>[0,1] gives the intensity of the dithering
+	the default value is 0.9
+	
+	MISC.
+	¨¨¨¨¨
 	All lights are considered active at all times, but multiple lights are
 	taken into account both with the raytracer and rasteriser. 
 	
@@ -75,7 +256,7 @@ IMPLEMENTATION NOTES :
 	Ray triangle algorithm is based on a paper by Tomas Moller and Ben 
 	Trumbore.
 
-	The raytracer is multithreaded with 4 threads by default. this can be 
+	The raytracer is multithreaded with 8 threads by default. this can be 
 	changed with the define in src/ga_raytrace.h 
 
 	the obj loader has a 500 000 vertex and face limit to simplify the 
@@ -85,18 +266,20 @@ IMPLEMENTATION NOTES :
 
 DIFFICULTIES ENCOUNTERED:
 =========================
-	Implementing it was quite straightforward, this is a list of non-trivial
-	problems I encountered and their solution :
-	- mean of the vertex normals doesn't point in the same direction as the
-	triangle normal. 
-	- vertex order is not always respected.
-	-> since i needed the triangle normal i computed it with dot product,
-	and checked that it's dot product with the mean of the vertex normals
-	couldn't be negative.
+	The fast kd-tree construction and traversal algorithms found in
+	literature have been difficult to implement without resulting
+	in strange artefacts. The algorithms implemented are smaller
+	but more robust. Faster algorithms can be found commented out in
+	the code. 
 
-	Numerical rounding errors in ray-triangle intersections. -> I added an 
-	epsilon to the comparisons. 
+	Gathering the photons in the photonmap to ensure correct intensity
+	has been difficult as the usually proposed heuristics are not
+	compatible with my photonmap implementation. 
 
-	- relative links in xml : suprisingly hard to implement, so it's not 
-	solved yet. 
+TESTING THE RAYTRACER:
+======================
+	Different test files are proposed in the xml directory. Those
+	can be rendered with the default render parameters without
+	problems, and should take about 10 min to render.
+
 
