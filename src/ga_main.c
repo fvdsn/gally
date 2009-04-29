@@ -2,17 +2,14 @@
 #include<string.h>
 #include<stdio.h>
 #include "ga_raytrace.h"
-#include "ga_raster.h"
 #include "ga_kdt.h"
 
 static const char *help_text = "Mendatory arguments : \
 \n\t-scene=PATH   : the path to the sdl scene file\n\
 Optional arguments:\
-\n\t-ray(tracer)  : use the raytracer.  (default method)\
-\n\t-ras(teriser) : use the rasteriser.\
 \n\t-out=PATH     : path to the png output -default : out.png. \
-\n\t-sx=INT       : the horizontal rendering size (default:256)\
-\n\t-sy=INT       : the vertical rendering size   (default:256)\
+\n\t-sx=INT       : the horizontal rendering size (default:512)\
+\n\t-sy=INT       : the vertical rendering size   (default:512)\
 \n\t-samples=INT  : oversampling (default:1)\
 \n\t-dither=FLOAT : dithering [0,1], (default:0)\
 \n\t-photonmap=FLOAT : photon radius (default:0.2)\
@@ -23,7 +20,6 @@ int main(int argc, char **argv){
 	char * png_path = "out.png";
 	int	sizex = 512;
 	int 	sizey = 512;
-	int	raytrace = 1;
 	int	samples  = 1;
 	float 	pm_res   = 0.2;
 	float   dither = 0.0f;
@@ -31,11 +27,7 @@ int main(int argc, char **argv){
 	int i = argc;
 	while(i--){
 		if(i == 0){break;}
-		if(!strncmp(argv[i],"-ray",4)){
-			raytrace = 1;
-		}else if(!strncmp(argv[i],"-ras",4)){
-			raytrace = 0;
-		}else if(!strncmp(argv[i],"-out=",5)){
+		if(!strncmp(argv[i],"-out=",5)){
 			png_path = argv[i] + 5;
 		}else if(!strncmp(argv[i],"-scene=",7)){
 			sdl_path = argv[i] + 7;
@@ -93,25 +85,21 @@ int main(int argc, char **argv){
 	ga_scene_set_sampling(s,samples);
 	ga_scene_set_dithering(s,dither);
 	ga_scene_set_pm_resolution(s,pm_res);
-	if(raytrace){
-		printf("Applying scene graph transforms\n");
-		ga_scene_build_triangle(s);
-		printf("Building Scene Bounding Box\n");
-		ga_scene_build_bounding_box(s);
-		vec_print(s->box_min);
-		vec_print(s->box_max);
-		printf("Building KD-Tree\n");
-		ga_scene_build_kdtree(s);
-		printf("Rendering Photon Pass ... \n");
-		ga_ray_gi_compute(s);
-		printf("Rendering pixel collumn ...\n");
-		ga_ray_render(s);
-		printf("Done\n");
-	}else{
-		printf("Rendering polygon number ...\n");
-		ga_raster_render(s);
-		printf("Done\n");
-	}	
+
+	printf("Applying scene graph transforms\n");
+	ga_scene_build_triangle(s);
+	printf("Building Scene Bounding Box\n");
+	ga_scene_build_bounding_box(s);
+	vec_print(s->box_min);
+	vec_print(s->box_max);
+	printf("Building KD-Tree\n");
+	ga_scene_build_kdtree(s);
+	printf("Rendering Photon Pass ... \n");
+	ga_ray_gi_compute(s);
+	printf("Rendering pixel collumn ...\n");
+	ga_ray_render(s);
+	printf("Done\n");
+
 	ga_scene_save_image(s,png_path);
 	printf("Render saved at '%s'\n",png_path);
 	return 0;

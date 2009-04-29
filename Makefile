@@ -8,18 +8,9 @@ MAIN_BIN = render.bin
 all : Makefile main
 
 main: ga_main.o
-	${CC} ${FLAGS} ${LIBS} -o ${MAIN_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o ga_raytrace.o ga_main.o ga_kdt.o ga_shading.o ga_photonmap.o
+	${CC} ${FLAGS} ${LIBS} -o ${MAIN_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raytrace.o ga_main.o ga_kdt.o ga_shading.o ga_photonmap.o
 
-rasteriser: ga_raster.o 
-	${CC} ${FLAGS} ${LIBS} -o ${RAS_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raster.o
-
-raytracer: ga_raytrace.o 
-	${CC} ${FLAGS} ${LIBS} -o ${RAY_BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o ga_raytrace.o ga_shading.o 
-
-loader: ga_scene_load.o ga_scene.o
-	${CC} ${FLAGS} ${LIBS} -o ${BIN} ga_scene_load.o ga_scene.o ga_geom.o ga_math.o ga_list.o ga_img.o
-
-ga_main.o : src/ga_main.c ga_raster.o ga_raytrace.o ga_kdt.o ga_shading.o ga_photonmap.o
+ga_main.o : src/ga_main.c ga_raytrace.o ga_kdt.o ga_shading.o ga_photonmap.o
 	${CC} ${FLAGS} -c src/ga_main.c
 
 ga_kdt.o : src/ga_kdt.c src/ga_kdt.h ga_geom.o ga_list.o
@@ -27,9 +18,6 @@ ga_kdt.o : src/ga_kdt.c src/ga_kdt.h ga_geom.o ga_list.o
 
 ga_photonmap.o : src/ga_photonmap.c src/ga_photonmap.h ga_math.o
 	${CC} ${FLAGS} -c src/ga_photonmap.c
-
-ga_raster.o: src/ga_raster.c src/ga_raster.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o
-	${CC} ${FLAGS} -c src/ga_raster.c
 
 ga_raytrace.o: src/ga_raytrace.c src/ga_raytrace.h ga_scene.o ga_scene_load.o ga_math.o ga_geom.o ga_kdt.o ga_photonmap.o
 	${CC} ${FLAGS} -c src/ga_raytrace.c
