@@ -37,7 +37,7 @@ static void ga_ray_photon_trace(const ga_scene_t *s, vec_t pos, vec_t dir, vec_t
 		if(min_store <= 0){
 			ga_photonmap_add(s->pm,&dpos,&color,&normal,&dir);
 		}
-		color = vec_mult(color,vec_scale(mat->diff_factor,mat->diff_color));
+		color = vec_mult(color,vec_scale(mat->diff_factor+mat->ref_factor,mat->diff_color));
 		vec_fperp(&normal,&d1,&d2);
 
 		ddir = vec_new(0,0,0,1);
@@ -88,9 +88,9 @@ vec_t ga_ray_trace(const ga_scene_t *s, vec_t start, vec_t dir,float importance,
 	}
 	if(ga_kdn_trace(s->kdtree,s->box_min,s->box_max,start,dir,
 				&tri,&u,&v,&t)){
-		normal = vec_add(vec_scale(u,tri->vnorm[1]),
+		normal = vec_norm(vec_add(vec_scale(u,tri->vnorm[1]),
 			 vec_add(vec_scale(v,tri->vnorm[2]),
-				vec_scale(1.0f-u-v,tri->vnorm[0])));
+				vec_scale(1.0f-u-v,tri->vnorm[0]))));
 		pos = vec_add(start,vec_scale(t,dir));
 		if(dpos){
 			*dpos = pos;
@@ -135,7 +135,7 @@ static void *ga_ray_thread_func(void *data){
 					/*accumulate samples*/
 					color = vec_add(color,
 						vec_scale(importance,
-						ga_ray_trace(td->scene,td->origin,dir,importance,10,NULL)));
+						ga_ray_trace(td->scene,td->origin,dir,importance,2,NULL)));
 					      	/*ga_ray_trace_photonmap(td->scene,td->origin,dir)));*/
 					py++;
 				}

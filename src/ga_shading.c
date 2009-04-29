@@ -27,7 +27,7 @@ static void ga_shade_phong(vec_t *color, const ga_material_t *mat,const vec_t *l
 	float fact;
 	float power;
 	r = vec_sub(
-		vec_scale(2.0,vec_scale(vec_dot(*norm,*ldir),*norm)),
+		vec_scale(2.0f,vec_scale(vec_dot(*norm,*ldir),*norm)),
 		*ldir);	
 	if((fact = vec_dot(r,vec_neg(*dir))) > 0.0f){
 		power = powf(fact,mat->spec_power)*mat->spec_factor;
@@ -35,7 +35,7 @@ static void ga_shade_phong(vec_t *color, const ga_material_t *mat,const vec_t *l
 				vec_mult(mat->spec_color,*lcolor)));
 	}
 }
-static void ga_shade_reflect(vec_t *color, const ga_material_t *mat);
+
 static void ga_shade_ao(vec_t *color, const ga_scene_t *s, const ga_material_t *mat, const vec_t *pos, const vec_t *norm, float importance){
 	int sample = mat->ao_sample;
 	float rlen,fact;
@@ -105,6 +105,28 @@ static void ga_shade_gi(vec_t *color, const ga_scene_t *s, const ga_material_t *
 	*color = vec_add(*color,gi_color);
 			
 }					
+static void ga_shade_reflect(vec_t *color,const ga_scene_t *s, const ga_material_t *mat,const vec_t *pos, const vec_t *dir, const vec_t *norm, float importance, int max_rec){
+	vec_t r,d1,d2,dr;
+	vec_t rcolor;
+	int sample = mat->soft_ref_sample;
+	int i;
+	r = vec_sub(*dir,vec_scale(2.0f*vec_dot(*norm,*dir),*norm));
+	vec_fperp(&r,&d1,&d2);
+	if(sample <= 0){
+		sample = 1;
+	}
+	i = sample;
+	while(i--){
+		dr = r;
+		vec_ffadd(&dr,mat->soft_ref_angle*(2.0f*random()*RAND_NORM) -1.0f,&d1);
+		vec_ffadd(&dr,mat->soft_ref_angle*(2.0f*random()*RAND_NORM) -1.0f,&d2);
+		vec_fnorm(&dr);
+		rcolor = vec_add(rcolor,
+				vec_scale(mat->ref_factor,vec_mult(mat->ref_color,
+				ga_ray_trace(s,*pos,dr,importance,max_rec -1, NULL))));
+	}
+	*color = vec_add(*color,vec_scale(1.0f/sample,rcolor));
+}
 
 vec_t ga_ray_shade(	const vec_t * pos, 
 			const vec_t * dir, 
@@ -135,6 +157,9 @@ vec_t ga_ray_shade(	const vec_t * pos,
 			n = n->next;
 		}
 		return color;
+	}
+	if(mat->ref_factor != 0.0f){
+		ga_shade_reflect(&color,s,mat,&dpos,dir,norm,importance,max_rec);
 	}
 	if(mat->emit_factor != 0.0f){
 		ga_shade_emit(&color,mat);

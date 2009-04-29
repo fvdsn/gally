@@ -15,6 +15,7 @@ Optional arguments:\
 \n\t-sy=INT       : the vertical rendering size   (default:256)\
 \n\t-samples=INT  : oversampling (default:1)\
 \n\t-dither=FLOAT : dithering [0,1], (default:0)\
+\n\t-photonmap=FLOAT : photon radius (default:0.2)\
 \n\t-h(elp)       : displays this message.\n";
 
 int main(int argc, char **argv){
@@ -60,9 +61,9 @@ int main(int argc, char **argv){
 		}else if(!strncmp(argv[i],"-photonmap=",11)){
 			pm_res = (float)strtod(argv[i]+11,NULL);
 			if(pm_res <= 0){
-				fprintf(stderr,"WARNING: invalid photonmap resolution:%d, set to default(0.1)\n",samples);
-			}else if (samples > 1){
-				fprintf(stderr,"WARNING: very low resolution:%d, render will be slow\n",samples);
+				fprintf(stderr,"WARNING: invalid photon radius:%f, set to default(0.2)\n",pm_res);
+			}else if (pm_res > 0.5){
+				fprintf(stderr,"WARNING: very high photon radius :%f, render will be slow\n",pm_res);
 			}
 		}else if(!strncmp(argv[i],"-dither=",8)){
 			dither = (float)strtod(argv[i]+8,NULL);

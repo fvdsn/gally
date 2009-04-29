@@ -90,6 +90,7 @@ typedef struct ga_material_s{
 	float transp_factor;	/* transparency intensity */
 	float ref_factor;	/* reflection intensity */
 	float ref_fresnel;	/* fresnel effect [0,1] */
+	vec_t ref_color;	/* color of the reflection */
 	float soft_ref_angle;	/* [0,1] -> 1.0 = 45deg */
 	int   soft_ref_sample;	/* samples used for reflection */
 

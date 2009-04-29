@@ -158,6 +158,8 @@ static void ga_fullmaterial_explore(xmlNodePtr n, ga_scene_t *s){
 			m->emit_color	 = vec_parse((char*)a->children->content);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"flat_color")){
 			m->flat_color	 = vec_parse((char*)a->children->content);
+		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ref_color")){
+			m->ref_color	 = vec_parse((char*)a->children->content);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_min_color")){
 			m->ao_min_color	 = vec_parse((char*)a->children->content);
 		}else if(!xmlStrcmp(a->name,(const xmlChar*)"ao_max_color")){
