@@ -7,10 +7,10 @@
    </Cameras>   
    
    <Lights>
-      <PointLight position="0 30 10" intensity="1" color="1 0.95 0.9" name="light0" />
-      <PointLight position="-30 15 0" intensity="1" color="0.5 0.5 0.5" name="light1" />
-      <PointLight position="30 15 0" intensity="1" color="0.5 0.5 0.5" name="light2" />
-      <PointLight position="0 0 30" intensity="1" color="0.3 0.3 0.3" name="light3" />
+      <PointLight position="0 30 10" intensity="400" color="1 0.95 0.9" name="light0" />
+      <PointLight position="-30 15 0" intensity="400" color="0.5 0.5 0.5" name="light1" />
+      <PointLight position="30 15 0" intensity="400" color="0.5 0.5 0.5" name="light2" />
+      <PointLight position="0 0 30" intensity="400" color="0.3 0.3 0.3" name="light3" />
    </Lights>
    
    <Geometry>
@@ -18,13 +18,11 @@
    </Geometry>
    
    <Materials>
-      <FlatMaterial color="0.1 0.0 0.0" name="mat0_flat"/>      
       <DiffuseMaterial color="0.5 0.2 0.0" name="mat0_dif"/>      
       <PhongMaterial color="0.5 0.5 0.5" shininess="20" name="mat0_phong"/>      
       <LinearCombinedMaterial 
-      	material1="mat0_flat" 	weight1="1"
-      	material2="mat0_dif" 	weight2="1"
-      	material3="mat0_phong" 	weight3="1"
+      	material1="mat0_dif" 	weight1="1"
+      	material2="mat0_phong" 	weight2="1"
       name="mat0"/>      
    </Materials>
    

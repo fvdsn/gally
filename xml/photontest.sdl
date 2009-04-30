@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE Sdl SYSTEM "sdl.dtd">
+
+<Sdl>
+   <Cameras>
+      <Camera position="5 5 5" direction="-1 -1 -1" up="0 1 0" fovy="45" name="cam0" /> 
+   </Cameras>   
+   
+   <Lights>
+      <PointLight position="-1 1 -1" intensity="2" color="1 1 1" photon_weight="10.0" photons="200000" name="light0" />
+   </Lights>
+   
+   <Geometry>
+   	<Obj src="xml/obj/cube.obj" name="cube" />
+   	<Obj src="xml/obj/sphere.obj" name="sphere" />
+   	<Obj src="xml/obj/photonroom.obj" name="room" />
+   </Geometry>
+   
+   <Materials>
+      <DiffuseMaterial color="0.3 0.3 0.3" name="dif0"/>      
+      <FullMaterial
+	      name="mat0"
+	      diff_color="1 1 1"
+	      diff_factor="1"
+	      gi_factor="1"
+	      />
+   </Materials>
+   
+   <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1 1.0">
+	   <Scale scale= "1.5 1.5 1.5"><Shape geometry="room" material="mat0"/></Scale>
+		   <!--<Translate vector="0 -0.4 0"><Scale scale="0.5 0.5 0.5"><Shape geometry="teapot" material="mat0" /></Scale></Translate>
+	   <Translate vector="0 -0.5 0">
+		  <Scale scale="1 0.1 1"><Shape geometry="cube" material="mat0" /></Scale>
+	  </Translate>-->
+   </Scene>
+</Sdl>

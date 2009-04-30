@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE Sdl SYSTEM "sdl.dtd">
+
+<Sdl>
+   <Cameras>
+      <Camera position="5 5 5" direction="-1 -1 -1" up="0 1 0" fovy="45" name="cam0" /> 
+   </Cameras>   
+   
+   <Lights>
+      <PointLight position="-1 5 0" intensity="50" radius="0.3" samples="8" color="1 1 1"  name="light0" />
+   </Lights>
+   
+   <Geometry>
+   	<Obj src="xml/obj/cube.obj" name="cube" />
+   	<Obj src="xml/obj/sphere.obj" name="sphere" />
+   	<Obj src="xml/obj/teapot.obj" name="teapot" />
+   </Geometry>
+   
+   <Materials>
+      <DiffuseMaterial color="0.3 0.3 0.3" name="dif0"/>      
+      <FullMaterial
+	      name="mat0"
+	      diff_color="0.3 0.3 0.3"
+	      diff_factor="1"
+	      ao_factor="0.3"
+	      ao_sample = "8"
+	      ao_min_dist="0.01"
+	      ao_max_dist="1"
+	      ao_min_color="0 0 0.1"
+	      ao_max_color="0.5  0.5  0.4"
+	      />
+   </Materials>
+   
+   <Scene camera="cam0" lights="light0" background="0.1 0.1 0.1 1.0">
+   	<Translate vector="0 -0.4 0"><Scale scale="0.5 0.5 0.5"><Shape geometry="teapot" material="mat0" /></Scale></Translate>
+	   <Translate vector="0 -0.5 0">
+		  <Scale scale="1 0.1 1"><Shape geometry="cube" material="mat0" /></Scale>
+	   </Translate>
+   </Scene>
+</Sdl>

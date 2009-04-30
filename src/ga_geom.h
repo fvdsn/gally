@@ -3,7 +3,7 @@
 #include "ga_math.h"
 
 /*max number of faces and vertices that can be loaded from an obj file */
-#define GA_MAX_VERT 500000
+#define GA_MAX_VERT 5000000
 
 typedef struct tri_s{
 	vec_t norm;	/*triangle normal*/
