@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE Sdl SYSTEM "sdl.dtd">
+
+<Sdl>
+   <Cameras>
+      <Camera position="1.2 0.4 9" direction="0 0 -1" up="0 1 0" fovy="45" name="cam0" /> 
+   </Cameras>   
+   
+   <Lights>
+      <PointLight position="0 1.75 0.5" intensity="0.8" radius="0.15" samples="5" color="1 0.99 0.95" photons="0" photon_weight="4" name="light1" />
+      <PointLight position="0.5 1.75 0.5" intensity="0.8" radius="0.15" samples="5" color="1 0.99 0.95" photons="0" photon_weight="4" name="light2" />
+      <PointLight position="0.8 1.75 0.5" intensity="0.8" radius="0.15" samples="5" color="1 0.99 0.95" photons="0" photon_weight="4" name="light3" />
+      <PointLight position="1.1 1.75 0.5" intensity="0.8" radius="0.15" samples="5" color="1 0.99 0.95" photons="0" photon_weight="4" name="light4" />
+   </Lights>
+   
+   <Geometry>
+	<Obj src="xml/house/obj/house.obj" name="house" />
+	<Obj src="xml/house/obj/roof.obj" name="roof" />
+	<Obj src="xml/house/obj/stairs.obj" name="stairs" />
+	<Obj src="xml/house/obj/chairs.obj" name="chairs" />
+	<Obj src="xml/house/obj/suzanne.obj" name="suzanne" />
+	<Obj src="xml/house/obj/mirror.obj" name="mirror" />
+	<Obj src="xml/house/obj/mirrorback.obj" name="cadre" />
+	<Obj src="xml/house/obj/staircase.obj" name="staircase" />
+   </Geometry>
+   
+   <Materials>
+      <DiffuseMaterial color="0.9 0.9 0.9" name="dif1"/>      
+      <DiffuseMaterial color="0.3 0.3 0.9" name="dif2"/>      
+      <DiffuseMaterial color="0.9 0.1 0.1" name="dif3"/>      
+      <DiffuseMaterial color="0 0.9 0" name="mat_suzanne"/>      
+      <DiffuseMaterial color="0 0 0.9" name="mat_cadre"/>      
+      <DiffuseMaterial color="0.85 0.654 0.35" name="mat_wood"/>      
+      <FullMaterial
+	      name="mat0"
+	      diff_color="0.9 0.9 0.9"
+	      diff_factor="1"
+	      ao_factor="0"
+	      ao_sample = "8"
+	      ao_min_dist="0.01"
+	      ao_max_dist="1"
+	      ao_min_color="0 0 0.1"
+	      ao_max_color="0.5  0.5  0.4"
+	      gi_factor = "1"
+	      gi_sample = "4"
+	      />
+      <FullMaterial
+	      name="mat_mirror"
+	      diff_color="1 1 1"
+	      diff_factor="0"
+	      ref_factor="1"
+	      ref_color="1 1 1"
+	      />
+	
+   </Materials>
+   
+   <Scene camera="cam0" lights="light0" background="0 0 0">
+   	<Shape geometry="house" material="dif1" />
+	<Shape geometry="roof" material="dif2" />
+	<Shape geometry="stairs" material="dif1" />
+	<Shape geometry="chairs" material="dif3" />
+	<Shape geometry="suzanne" material="mat_suzanne" />
+	<Shape geometry="mirror" material="mat_mirror" />
+	<Shape geometry="cadre" material="mat_cadre" />
+	<Shape geometry="staircase" material="mat_wood" />
+   </Scene>
+</Sdl>
